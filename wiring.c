@@ -29,8 +29,8 @@ int g_conductor_count = 0; // For the number of conductors in the csv file.
 // --- Main Function ---
 int main() {
 	// Local variable for user input
-	int local_power_watts; // Watts imput
-	int local_voltage_volts;
+	float local_power_watts; // Watts imput
+	float local_voltage_volts;
 	float local_power_factor; // Decimal from 0 to 1
 	int local_phase_count; // 1, 2 or 3 phases.
 	float local_circuit_length_meters;
@@ -45,6 +45,10 @@ int main() {
 	// --- A little presentation ---
 	printf("\n\nElectrical Conductor Selection Program (NOM-001-SEDE-2012)\n");
 	printf("----------------CS50 PROJECT by @Horfezyn----------------\n\n");
+
+    // --- Data loading ---
+    printf("--- Loading NOM Data ---\n");
+    load_ampacity_table_data("ampacity_data.csv");
 
 	// --- User Input ---
 	printf("--- Enter Circuit Parameters ---\n");
