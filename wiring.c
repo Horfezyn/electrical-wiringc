@@ -11,12 +11,12 @@ typedef struct sc_conductor{
 		float sc_ampacity_at_75c_amps; // Ampacity at 75°C conductor temp
 } Conductor;
 
-Conductor g_conductor_data_g_list[30]; // General structure filled with DATA from CSV files, max. 30 types of conductor.
+Conductor g_conductor_data_g_list[20]; // General structure filled with DATA from CSV files, max. 20 types of conductor.
 
-// --- Function Prootypes --- (To be developed, i will include the function in Main)
+// --- Function Prootypes --- (Under development)
 
 // For data
-int load_ampacity_table_data(const char *arg_file_name_ptr); // FUnction to load de ampacity table
+int load_ampacity_table_data(const char *arg_file_name_ptr); // Function to load the ampacity table
 
 // Calculation
 float calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count); // Initial current calculation
