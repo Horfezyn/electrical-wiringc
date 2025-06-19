@@ -1,0 +1,7 @@
+ConduitType,NominalDiameterInches,InternalAreaMM2
+EMT,0.5,150.0
+EMT,0.75,250.0
+EMT,1.0,400.0
+PVC,0.5,140.0
+PVC,0.75,240.0
+PVC,1.0,380.0
