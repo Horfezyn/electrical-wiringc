@@ -7,8 +7,8 @@
 
 // Structures for a conductor
 typedef struct sc_conductor{
-	int sc_gauge_awg_kcmil; // Conductor gauge in AWG/kcmil
-	float sc_ampacity_at_75c_amps; // Ampacity at 75°C conductor temp
+    int sc_gauge_awg_kcmil; // Conductor gauge in AWG/kcmil
+    float sc_ampacity_at_75c_amps; // Ampacity at 75°C conductor temp
 } Conductor;
 
 // Structures for temperature correction factors
@@ -34,12 +34,12 @@ int g_temp_correction_count = 0; // For the number of correction factors in the 
 
 // --- Main Function ---
 int main() {
-	// Local variable for user input
-	float local_power_watts; // Watts imput
-	float local_voltage_volts;
-	float local_power_factor; // Decimal from 0 to 1
-	int local_phase_count; // 1, 2 or 3 phases.
-	float local_circuit_length_meters;
+    // Local variable for user input
+    float local_power_watts; // Watts imput
+    float local_voltage_volts;
+    float local_power_factor; // Decimal from 0 to 1
+    int local_phase_count; // 1, 2 or 3 phases.
+    float local_circuit_length_meters;
     int local_ambient_temperature; 
 
 	// Local variables calculated
@@ -87,9 +87,9 @@ int main() {
     while (local_circuit_length_meters <= 0); //Validate that phase count is a positive number
     do{
         printf("Enter ambient temperature (celsius, e.g., 30): ");
-        scanf("%f", &local_ambient_temperature);
+        scanf("%d", &local_ambient_temperature);
     }
-    while (local_circuit_length_meters <= 0); //Validate that phase count is a positive number
+    while (local_ambient_temperature <= 0); //Validate that phase count is a positive number
 
 	// --- Calculations ---
 	printf("\n--- Performing Calculations ---\n");
@@ -97,12 +97,16 @@ int main() {
     local_load_current_amps = calculate_load_current_amps(local_power_watts, local_voltage_volts, local_power_factor, local_phase_count);
     if (local_load_current_amps < 0) { // Check for calculation errors
         printf("Error calculating load current. Exiting.\n");
-        return 1;
+        return (int)local_load_current_amps;
     }
     printf("Calculated Load Current (Ib): %.2f Amps\n", local_load_current_amps);
 
     // Correction factors
     local_temp_correction_factor = get_temp_correction_factor(local_ambient_temperature); // Calculating the correction factor.
+    if (local_temp_correction_factor < 0){
+        printf("Error: Temperature correction factor not found for %dC. ", local_ambient_temperature);
+        return (int) local_temp_correction_factor;
+    }
     local_num_cond_adjustment_factor = 0.8; // Assuming 3 conductors, 80% adjustment (from NOM 310-15(B)(3)(a))
 
     local_adjusted_current_amps = calculate_adjusted_current_amps(local_load_current_amps, local_temp_correction_factor, local_num_cond_adjustment_factor);
@@ -229,5 +233,5 @@ float get_temp_correction_factor(int arg_ambient_temp){
             return g_temp_factors_g_list[i].stc_correction_factor;
         }
     }
-    return 1; 
+    return  -1;
 }
