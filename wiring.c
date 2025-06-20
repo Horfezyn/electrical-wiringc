@@ -3,7 +3,7 @@
 #include <math.h> // For matemathical functions (sqrt, pow)
 #include <string.h> // For string manipulation (strcpy, strtok, strcmp)
 
-// --- Structure Definitions (To be developed, starting with 1 of them).
+// --- Structure Definitions ---
 
 // Structures for a conductor
 typedef struct sc_conductor{
@@ -17,20 +17,49 @@ typedef struct s_temp_correction{
     float stc_correction_factor;
 } TempCorrectionFactor;
 
-// For data
+// Structure for number of conductors adjusment factor
+typedef struct s_numc_adjustment{
+    int snca_conductor_count;
+    float snca_adjustment_factor;
+}NumCondFactor;
+
+// Structure for the conduit
+typedef struct s_conduit{
+    char sc_conduit_type[50];
+    float sc_diameter_inches;
+    float sc_internal_area_mm2;
+}Conduit;
+
+// --- Function Prototypes ---
+// For data loading
 int load_ampacity_table_data(const char *arg_file_name_ptr); // Function to load the ampacity table
 int load_temperature_correction(const char *arg_file_name_ptr); // Function to load the temperature correction factors.
+int load_nconductor_factor(const char *arg_file_name_ptr); // Function to load the number of conductor, correction factor.
+int load_conduit_fill_data(const char *arg_file_name_ptr); // function to load the properties of conduit.
 
-// Calculation
+// Calculation base
 float calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count); // Initial current calculation
 float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_temp_correction_factor, float arg_num_cond_adjustment_factor); //
-int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps); // For simplicity only use the adjusted current
+
+// Data retrieval 
 float get_temp_correction_factor(int arg_ambient_temp); // Get the temp correction fator based on ambien temperature.
-// Global variables
+float get_ncond_adj_factor(int arg_conductor_count); // Get the correction factor for the number of conductors.
+
+// Selection and validation
+int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps); // For simplicity only use the adjusted current
+
+// --- Global variables ---
 Conductor g_conductor_data_g_list[20]; // General structure filled with DATA from CSV files, max. 20 types of conductor.
 int g_conductor_count = 0; // For the number of conductors in the csv file.
+
 TempCorrectionFactor g_temp_factors_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
 int g_temp_correction_count = 0; // For the number of correction factors in the CSV file.
+
+NumCondFactor g_ncond_adj_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
+int g_ncond_adj_count = 0; // For the number of correction factors in the CSV file.
+
+Conduit g_conduit_data_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
+int g_conduit_count = 0;
 
 // --- Main Function ---
 int main() {
@@ -41,25 +70,27 @@ int main() {
     int local_phase_count; // 1, 2 or 3 phases.
     float local_circuit_length_meters;
     int local_ambient_temperature; 
+    int local_conductor_count;
 
-	// Local variables calculated
-	float local_load_current_amps;
-	float local_temp_correction_factor;
-	float local_num_cond_adjustment_factor;
-	float local_adjusted_current_amps;
-	int local_suggested_gauge_awg_kcmil;
-
-	// --- A little presentation ---
-	printf("\n\nElectrical Conductor Selection Program (NOM-001-SEDE-2012)\n");
-	printf("----------------CS50 PROJECT by @Horfezyn----------------\n\n");
+    // Local variables calculated
+    float local_load_current_amps;
+    float local_temp_correction_factor;
+    float local_num_cond_adjustment_factor;
+    float local_adjusted_current_amps;
+    int local_suggested_gauge_awg_kcmil;
+    
+    // --- A little presentation ---
+    printf("\n\nElectrical Conductor Selection Program (NOM-001-SEDE-2012)\n");
+    printf("----------------CS50 PROJECT by @Horfezyn----------------\n\n");
 
     // --- Data loading ---
     printf("--- Loading NOM Data ---\n");
     load_ampacity_table_data("ampacity_data.csv");
     load_temperature_correction("temp_correction_data.csv");
-
-	// --- User Input ---
-	printf("--- Enter Circuit Parameters ---\n");
+    load_nconductor_factor("num_cond_adj_data.csv");
+    
+    // --- User Input ---
+    printf("--- Enter Circuit Parameters ---\n");
     do{
         printf("Enter power (Watts, e.g., 10000): ");
         scanf("%f", &local_power_watts);
@@ -89,10 +120,14 @@ int main() {
         printf("Enter ambient temperature (celsius, e.g., 30): ");
         scanf("%d", &local_ambient_temperature);
     }
-    while (local_ambient_temperature <= 0); //Validate that phase count is a positive number
-
-	// --- Calculations ---
-	printf("\n--- Performing Calculations ---\n");
+    while (local_ambient_temperature <= 0); //Validate that ambient temperature is a value
+    do{
+        printf("Enter number of current-carrying conductors in conduit (e.g., 3): ");
+        scanf("%d", &local_conductor_count);
+    }
+    while (local_conductor_count <= 0); 
+    // --- Calculations ---
+    printf("\n--- Performing Calculations ---\n");
     // Current of the load
     local_load_current_amps = calculate_load_current_amps(local_power_watts, local_voltage_volts, local_power_factor, local_phase_count);
     if (local_load_current_amps < 0) { // Check for calculation errors
@@ -104,10 +139,14 @@ int main() {
     // Correction factors
     local_temp_correction_factor = get_temp_correction_factor(local_ambient_temperature); // Calculating the correction factor.
     if (local_temp_correction_factor < 0){
-        printf("Error: Temperature correction factor not found for %dC. ", local_ambient_temperature);
+        printf("Error: Temperature correction factor not found for %dC. Exiting\n", local_ambient_temperature);
         return (int) local_temp_correction_factor;
     }
-    local_num_cond_adjustment_factor = 0.8; // Assuming 3 conductors, 80% adjustment (from NOM 310-15(B)(3)(a))
+    local_num_cond_adjustment_factor = get_ncond_adj_factor(local_conductor_count); // Calculationg the correction factor.
+    if (local_num_cond_adjustment_factor < 0){
+        printf("Error: Number of conductors adjustment factor not found for %d conductors. Exiting \n", local_conductor_count);
+        return (int) local_num_cond_adjustment_factor;
+    }
 
     local_adjusted_current_amps = calculate_adjusted_current_amps(local_load_current_amps, local_temp_correction_factor, local_num_cond_adjustment_factor);
     printf("Adjusted Design Current (Iz): %.2f Amps\n", local_adjusted_current_amps);
@@ -171,8 +210,10 @@ int load_temperature_correction(const char *arg_file_name_ptr){
         printf("Error opening temp_correction_data.csv");
         return 1;
     }
+
     char line[32]; // Limit for each line.
     fgets(line, sizeof(line), file_ptr);
+
     g_temp_correction_count = 0;
     while(fgets(line, sizeof(line), file_ptr) && g_temp_correction_count < 20){ // 20 is the max number of correction factors
         char *token;
@@ -190,6 +231,34 @@ int load_temperature_correction(const char *arg_file_name_ptr){
     printf("Action: Loaded %d temperature correction factors from %s.\n", g_temp_correction_count, arg_file_name_ptr);
     return 0;
 }
+
+// Number of conductors, correction factor
+int load_nconductor_factor(const char *arg_file_name_ptr){
+    FILE *file_ptr = fopen(arg_file_name_ptr, "r");
+    if (!file_ptr) {
+        printf("Error opening num_cond_ad_data.csv");
+        return 1;
+    }
+    char line[100];
+    fgets(line, sizeof(line), file_ptr); // Skip header
+    g_ncond_adj_count = 0;
+    while (fgets(line, sizeof(line), file_ptr) && g_ncond_adj_count < 20) {
+        char *token;
+        token = strtok(line, ",");
+        if (token) {
+            g_ncond_adj_g_list[g_ncond_adj_count].snca_conductor_count = atoi(token);
+        }
+        token = strtok(NULL, "\n");
+        if (token) {
+            g_ncond_adj_g_list[g_ncond_adj_count].snca_adjustment_factor = atof(token);
+        }
+        g_ncond_adj_count++;
+    }
+    fclose(file_ptr);
+    printf("Action: Loaded %d number of conductors adjustment factors from %s.\n", g_ncond_adj_count, arg_file_name_ptr);
+    return 0;
+}
+
 // Current calculation
 float calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count){
     if ( arg_voltage_volts == 0 || arg_power_factor == 0) {
@@ -234,4 +303,14 @@ float get_temp_correction_factor(int arg_ambient_temp){
         }
     }
     return  -1;
+}
+
+// Number of conductors factors based on user´s input
+float get_ncond_adj_factor(int arg_conductor_count){
+    for (int i = 0; i < g_conductor_count; i++){
+        if (g_ncond_adj_g_list[i].snca_conductor_count == arg_conductor_count){
+            return g_ncond_adj_g_list[i].snca_adjustment_factor;
+        }
+    }
+    return -1;
 }
