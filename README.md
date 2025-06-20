@@ -17,27 +17,27 @@ The project seeks to simplify the electrical design process, ensuring that the s
 gcc --version
 ```
 2. Required files: Place the following CSV files in the same directory as your compiled executable or source code: 
-**`ampacity_data.csv`**
-**`temp_correction_data.csv`**
-**`num_cond_adj_data.csv`**
+*`ampacity_data.csv`*
+*`temp_correction_data.csv`*
+*`num_cond_adj_data.csv`*
 3. Compilation
-** Use gcc(or another C compiler) to compile the code 
+* Use gcc(or another C compiler) to compile the code *
 ```bash
 gcc -o wiring.c -lm
 ```
 4. Running the program
-** After compilation, run the program like this:
+* After compilation, run the program like this:*
 ```bash
 ./wiring
 ```
 5. Sample input
-** Power in watts (e.g., 10000)
-** Voltage in volts (e.g., 220)
-** Power factor (e.g., 0.85)
-** Number of phases (1 or 3)
-** Circuit length in meters (e.g., 50)
-** Ambient temperature in °C (e.g., 30)
-** Number of current-carrying conductors (e.g., 3)
+* Power in watts (e.g., 10000)*
+* Voltage in volts (e.g., 220)*
+* Power factor (e.g., 0.85)*
+* Number of phases (1 or 3)*
+* Circuit length in meters (e.g., 50)*
+* Ambient temperature in °C (e.g., 30)*
+* Number of current-carrying conductors (e.g., 3)*
 
 ## License
 This project is licensed under the MIT License. 
