@@ -85,9 +85,9 @@ int main() {
 
     // --- Data loading ---
     printf("--- Loading NOM Data ---\n");
-    load_ampacity_table_data("ampacity_data.csv");
-    load_temperature_correction("temp_correction_data.csv");
-    load_nconductor_factor("num_cond_adj_data.csv");
+    load_ampacity_table_data("ampacity_data.csv\n");
+    load_temperature_correction("temp_correction_data.csv\n");
+    load_nconductor_factor("num_cond_adj_data.csv\n");
     
     // --- User Input ---
     printf("--- Enter Circuit Parameters ---\n");
@@ -126,8 +126,10 @@ int main() {
         scanf("%d", &local_conductor_count);
     }
     while (local_conductor_count <= 0); 
+    
     // --- Calculations ---
     printf("\n--- Performing Calculations ---\n");
+    
     // Current of the load
     local_load_current_amps = calculate_load_current_amps(local_power_watts, local_voltage_volts, local_power_factor, local_phase_count);
     if (local_load_current_amps < 0) { // Check for calculation errors
@@ -148,6 +150,7 @@ int main() {
         return (int) local_num_cond_adjustment_factor;
     }
 
+    // Adjusted current
     local_adjusted_current_amps = calculate_adjusted_current_amps(local_load_current_amps, local_temp_correction_factor, local_num_cond_adjustment_factor);
     printf("Adjusted Design Current (Iz): %.2f Amps\n", local_adjusted_current_amps);
     
@@ -177,7 +180,7 @@ int main() {
 int load_ampacity_table_data(const char *arg_file_name_ptr) {
     FILE *file_ptr = fopen(arg_file_name_ptr,"r");
     if (!file_ptr){
-        printf("Error opening ampacity_data.csv");
+        printf("Error opening ampacity_data.csv\n");
         return 1;
     }
 
@@ -207,7 +210,7 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
 int load_temperature_correction(const char *arg_file_name_ptr){
     FILE *file_ptr = fopen(arg_file_name_ptr, "r");
     if (!file_ptr){
-        printf("Error opening temp_correction_data.csv");
+        printf("Error opening temp_correction_data.csv\n");
         return 1;
     }
 
@@ -236,7 +239,7 @@ int load_temperature_correction(const char *arg_file_name_ptr){
 int load_nconductor_factor(const char *arg_file_name_ptr){
     FILE *file_ptr = fopen(arg_file_name_ptr, "r");
     if (!file_ptr) {
-        printf("Error opening num_cond_ad_data.csv");
+        printf("Error opening num_cond_ad_data.csv\n");
         return 1;
     }
     char line[100];
