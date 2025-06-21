@@ -85,9 +85,9 @@ int main() {
 
     // --- Data loading ---
     printf("--- Loading NOM Data ---\n");
-    load_ampacity_table_data("ampacity_data.csv\n");
-    load_temperature_correction("temp_correction_data.csv\n");
-    load_nconductor_factor("num_cond_adj_data.csv\n");
+    load_ampacity_table_data("ampacity_data.csv");
+    load_temperature_correction("temp_correction_data.csv");
+    load_nconductor_factor("num_cond_adj_data.csv");
     
     // --- User Input ---
     printf("--- Enter Circuit Parameters ---\n");
@@ -310,7 +310,7 @@ float get_temp_correction_factor(int arg_ambient_temp){
 
 // Number of conductors factors based on user´s input
 float get_ncond_adj_factor(int arg_conductor_count){
-    for (int i = 0; i < g_conductor_count; i++){
+    for (int i = 0; i < g_ncond_adj_count; i++){
         if (g_ncond_adj_g_list[i].snca_conductor_count == arg_conductor_count){
             return g_ncond_adj_g_list[i].snca_adjustment_factor;
         }
