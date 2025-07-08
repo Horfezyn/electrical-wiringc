@@ -19,7 +19,12 @@
 // Structures for a conductor
 typedef struct sc_conductor{
     int sc_gauge_awg_kcmil; // Conductor gauge in AWG/kcmil
+    char sc_insulation_type[32]; // Insultation type
     float sc_ampacity_at_75c_amps; // Ampacity at 75°C conductor temp
+    float sc_ampacity_at_90c_amps; // Ampacity at 90°C 
+    float sc_area_mm2; 
+    float sc_resistance_km; 
+    float sc_reactance_km;
 } Conductor;
 
 // Structures for temperature correction factors
@@ -55,6 +60,10 @@ float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_tem
 // Data retrieval 
 float get_temp_correction_factor(int arg_ambient_temp); // Get the temp correction fator based on ambien temperature.
 float get_ncond_adj_factor(int arg_conductor_count); // Get the correction factor for the number of conductors.
+float get_conductor_resistance_km(int arg_gauge_awg_kcmil);
+float get_conductor_reactance_km(int arg_gauge_awg_kcmil);
+float get_conductor_mm2(int arg_gauge_awg_kcmil);
+float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // Selection and validation
 int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps); // For simplicity only use the adjusted current
@@ -82,6 +91,9 @@ int main() {
     float local_circuit_length_meters;
     int local_ambient_temperature; 
     int local_conductor_count;
+    char local_insulation_type[32];
+    char local_conduit_type[32];
+    float local_conduit_diameter;
 
     // Local variables calculated
     float local_load_current_amps;
@@ -114,6 +126,12 @@ int main() {
         printf("Error loading number of conductor adjustmen data. Exiting program...");
         return return_code;
     }
+    return_code = load_conduit_fill_data("conduit_fill_data.csv");
+    if (return_code != SUCCESS){
+        printf("Error loading conduit fill data. Exiting program...");
+        return return_code;
+    }
+    printf("--- Data Loading Complete ---\n\n");
     
     // --- User Input ---
     printf("--- Enter Circuit Parameters ---\n");
@@ -173,13 +191,30 @@ int main() {
             local_conductor_count = 0;
         }
     } while (local_conductor_count <= 0); 
+
+    printf("Enter insulation type (e.g., THHN, THW): "); // Insultation type
+    scanf("%s", local_insulation_type);
+
+    printf("Enter conduit type (e.g., EMT, PVC): "); // Conduit type
+    scanf("%s", local_conduit_type);
+
+    do{
+        printf("Enter conduit nominal diameter (e.g., 0.5 for 1/2, 0.75 for 3/4): ");
+        if (scanf("%f", &local_conduit_diameter) != 1) {
+            REPORT_ERROR("Invalid input for conduit diameter. Please enter a number.");
+            while (getchar() != '\n');
+            local_conduit_diameter = 0;
+        }
+    } while (local_conduit_diameter <= 0); //Validate that phase count is a positive number
+
+    printf("------------------------------\n\n");
     
     // --- Calculations ---
     printf("\n--- Performing Calculations ---\n");
     
     // Current of the load
     local_load_current_amps = calculate_load_current_amps(local_power_watts, local_voltage_volts, local_power_factor, local_phase_count);
-    if (local_load_current_amps < 0) { // Check for calculation errors (any negative return indicates an error code)
+    if (local_load_current_amps < 0) { 
         printf("Error calculating load current. Error code: %d. Exiting.\n", (int)local_load_current_amps);
         return (int)local_load_current_amps;
     }
@@ -297,6 +332,50 @@ int load_temperature_correction(const char *arg_file_name_ptr){
     }
     fclose(file_ptr);
     printf("Action: Loaded %d temperature correction factors from %s.\n", g_temp_correction_count, arg_file_name_ptr);
+    return SUCCESS;
+}
+
+// Conduit fill data CSV
+int load_conduit_fill_data(const char *arg_file_name_ptr){
+    FILE *file_ptr = fopen(arg_file_name_ptr, "r");
+    if(!file_ptr){
+        REPORT_ERROR("Error loading conduit_fill_data.csv\n");
+        return ERROR_FILE_OPEN;
+    }
+    char line[128];
+    fgets(line, sizeof(line), file_ptr);
+
+    g_conduit_count = 0;
+    while(fgets(line, sizeof(line), file_ptr) && g_conduit_count < 20){
+        char *token;
+        token = strtok(line, ",");
+        if(token){
+            strcpy(g_conduit_data_g_list[g_conduit_count].sc_conduit_type, token);
+        } else{
+            REPORT_ERROR("Invalid format in conduit_fill_data.csv: Conduit type not found\n");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+        token = strtok(NULL, ",");
+        if(token){
+            g_conduit_data_g_list[g_conduit_count].sc_diameter_inches = atof(token);
+        }else {
+            REPORT_ERROR ("Invalid format in conduit_fill_data.csv: Diameter not found");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+        token = strtok(NULL, ",");
+        if(token){
+            g_conduit_data_g_list[g_conduit_count].sc_internal_area_mm2 = atof(token);
+        }else{
+            REPORT_ERROR("Invalid format in conduit_fill_data.csv: Area not found");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+        g_conductor_count++;
+    }
+    fclose(file_ptr);
+    printf("Action: Loaded %d conduit fill data entries from %s. \n", g_conductor_count,arg_file_name_ptr);
     return SUCCESS;
 }
 
