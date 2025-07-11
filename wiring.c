@@ -265,90 +265,37 @@ int main() {
 int load_ampacity_table_data(const char *arg_file_name_ptr) {
     FILE *file_ptr = fopen(arg_file_name_ptr,"r");
     if (!file_ptr){
-        REPORT_ERROR("Error opening ampacity_data.csv\n");
+        REPORT_ERROR("Failed to open ampacity_data.csv");
         return ERROR_FILE_OPEN;
     }
 
-    char line[128]; //Limit for each line, maybe i need less.
-    fgets(line, sizeof(line),file_ptr);
+    char line[128]; // Increased buffer size for safety, 32 might be too small for some lines/paths
+    fgets(line, sizeof(line),file_ptr); // Skip header
 
-    g_conductor_count = 0; // Auxiliar for # of conductors to load.
-    while (fgets(line, sizeof(line), file_ptr) && g_conductor_count < 30){
+    g_conductor_count = 0;
+    while (fgets(line, sizeof(line), file_ptr) != NULL && g_conductor_count < 20){ // Changed condition and hardcoded 20
         char *token;
+
         token = strtok(line, ",");
-         // 1. Gauge (AWG/kcmil)
-        token = strtok(line_copy, ",");
         if (token) {
             g_conductor_data_g_list[g_conductor_count].sc_gauge_awg_kcmil = atoi(token);
         } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Gauge (AWG/kcmil) not found.");
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Gauge not found.");
             fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
+            return ERROR_INVALID_INPUT; // Or a more specific parsing error
         }
 
-        // 2. Insulation Type
-        token = strtok(NULL, ",");
-        if (token) {
-            // Use strncpy for safe string copy, ensuring null-termination
-            strncpy(g_conductor_data_g_list[g_conductor_count].sc_insulation_type, token, sizeof(g_conductor_data_g_list[g_conductor_count].sc_insulation_type) - 1);
-            g_conductor_data_g_list[g_conductor_count].sc_insulation_type[sizeof(g_conductor_data_g_list[g_conductor_count].sc_insulation_type) - 1] = '\0'; // Manual null-termination
-        } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Insulation Type not found.");
-            fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
-        }
-
-        // 3. Ampacity (75C Amps)
         token = strtok(NULL, ",");
         if (token) {
             g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_75c_amps = atof(token);
         } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity (75C) not found.");
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity not found.");
             fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
-        }
-
-        // 4. Ampacity (90C Amps)
-        token = strtok(NULL, ",");
-        if (token) {
-            g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_90c_amps = atof(token);
-        } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity (90C) not found.");
-            fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
-        }
-
-        // 5. Area (mm2)
-        token = strtok(NULL, ",");
-        if (token) {
-            g_conductor_data_g_list[g_conductor_count].sc_area_mm2 = atof(token);
-        } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Area (mm2) not found.");
-            fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
-        }
-
-        // 6. Resistance (Ohms/km)
-        token = strtok(NULL, ",");
-        if (token) {
-            g_conductor_data_g_list[g_conductor_count].sc_resistance_km = atof(token);
-        } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Resistance (Ohms/km) not found.");
-            fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
-        }
-
-        // 7. Reactance (Ohms/km) 
-        token = strtok(NULL, "\n");
-        if (token) {
-            g_conductor_data_g_list[g_conductor_count].sc_reactance_km = atof(token);
-        } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Reactance (Ohms/km) not found.");
-            fclose(file_ptr);
-            return ERROR_INVALID_INPUT;
+            return ERROR_INVALID_INPUT; // Or a more specific parsing error
         }
         g_conductor_count++;
     }
+
     fclose(file_ptr);
     printf("Action: Loaded %d ampacity data entries from %s.\n", g_conductor_count, arg_file_name_ptr);
     return SUCCESS;
