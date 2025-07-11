@@ -276,19 +276,74 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
     while (fgets(line, sizeof(line), file_ptr) && g_conductor_count < 30){
         char *token;
         token = strtok(line, ",");
+         // 1. Gauge (AWG/kcmil)
+        token = strtok(line_copy, ",");
         if (token) {
-            g_conductor_data_g_list[g_conductor_count].sc_gauge_awg_kcmil = atoi(token); // For 1/0 i use 0 as name, for 2/0 -1, for 3/0 -2, and for 4/0 -3 in the CSV, to simplify the comparison
+            g_conductor_data_g_list[g_conductor_count].sc_gauge_awg_kcmil = atoi(token);
         } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Guage not found.");
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Gauge (AWG/kcmil) not found.");
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
 
+        // 2. Insulation Type
+        token = strtok(NULL, ",");
+        if (token) {
+            // Use strncpy for safe string copy, ensuring null-termination
+            strncpy(g_conductor_data_g_list[g_conductor_count].sc_insulation_type, token, sizeof(g_conductor_data_g_list[g_conductor_count].sc_insulation_type) - 1);
+            g_conductor_data_g_list[g_conductor_count].sc_insulation_type[sizeof(g_conductor_data_g_list[g_conductor_count].sc_insulation_type) - 1] = '\0'; // Manual null-termination
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Insulation Type not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 3. Ampacity (75C Amps)
         token = strtok(NULL, ",");
         if (token) {
             g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_75c_amps = atof(token);
         } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity not found.");
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity (75C) not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 4. Ampacity (90C Amps)
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_90c_amps = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity (90C) not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 5. Area (mm2)
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_area_mm2 = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Area (mm2) not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 6. Resistance (Ohms/km)
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_resistance_km = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Resistance (Ohms/km) not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 7. Reactance (Ohms/km) 
+        token = strtok(NULL, "\n");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_reactance_km = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Reactance (Ohms/km) not found.");
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
