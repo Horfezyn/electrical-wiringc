@@ -256,6 +256,11 @@ int main() {
     } else if (local_suggested_gauge_awg_kcmil > 0) {
         printf("%d AWG\n", local_suggested_gauge_awg_kcmil);
     }
+
+    // Pausa antes de cerrar el .exe
+    printf("\nPress Enter to exit...");
+    while (getchar() != '\n');
+    getchar();
 	return SUCCESS;
 }
 
