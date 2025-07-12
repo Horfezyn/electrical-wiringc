@@ -1,139 +1,150 @@
-# Herramienta de Selección de Conductores Eléctricos
+# Electrical Conductor Selection Tool
 
-## Resumen
-Esta es una herramienta prototipo desarrollada en C, diseñada para facilitar la selección adecuada de conductores eléctricos, siguiendo las directrices establecidas en la **NOM-001-SEDE-2012** (Norma Oficial Mexicana para Instalaciones Eléctricas). Su objetivo es simplificar el proceso de diseño eléctrico, asegurando que los conductores elegidos cumplan con la normativa vigente en México.
+## Overview
 
-## Características
-- **Carga de Datos NOM:** Importa datos cruciales (ampacidad, factores de corrección por temperatura, factores de ajuste por número de conductores y datos de llenado de tubería conduit) desde archivos CSV.
-- **Cálculo de Corriente de Carga (Ib):** Determina la corriente de carga basándose en la potencia, voltaje, factor de potencia y número de fases (1 o 3) proporcionados por el usuario.
-- **Cálculo de Corriente de Diseño Ajustada (Iz):** Calcula la corriente ajustada aplicando factores de corrección por temperatura y por número de conductores a la corriente de carga.
-- **Sugerencia de Calibre de Conductor:** Propone el calibre de conductor apropiado (AWG o kcmil) en función de la corriente ajustada calculada y los datos de ampacidad cargados.
-- **Manejo de Errores:** Proporciona mensajes de error informativos para problemas como fallos en la carga de archivos, entradas inválidas o datos no encontrados.
-- **Interacción Amigable:** Guía al usuario a través de las entradas y mantiene la ventana de la consola abierta al finalizar la ejecución (o en caso de error) para revisar los resultados.
+This C program is a prototype tool designed to assist in the proper selection of electrical conductors, adhering to the guidelines set forth in **NOM-001-SEDE-2012** (Mexican Official Standard for Electrical Installations). The project aims to simplify the electrical design process, ensuring that selected conductors comply with current regulatory requirements in Mexico.
 
-## Cómo Compilar y Ejecutar
+---
 
-### Requisitos previos
-Asegúrate de tener un compilador de C instalado en tu sistema. Se recomienda **GCC** para Linux/macOS/WSL o **MinGW** para Windows. Puedes verificar tu versión de GCC ejecutando:
+## Features
+
+* **NOM Data Loading:** Reads crucial electrical data (ampacity, temperature correction factors, number of conductors adjustment factors, and conduit fill data) from CSV files.
+* **Load Current Calculation (Ib):** Computes the load current based on user-provided power, voltage, power factor, and number of phases (1 or 3).
+* **Adjusted Design Current Calculation (Iz):** Calculates the adjusted current by applying temperature correction and number of conductors adjustment factors to the load current.
+* **Suggested Conductor Gauge:** Determines and suggests the appropriate conductor gauge (AWG or kcmil) based on the calculated adjusted current and loaded ampacity data.
+* **Robust Error Handling:** Provides informative error messages for issues like file loading failures, invalid inputs, or data not found.
+* **User-Friendly Interaction:** Guides the user through input prompts and pauses the console window at the end of execution (or upon error) to allow time for result review.
+
+---
+
+## How to Compile and Run
+
+### Prerequisites
+
+Ensure you have a C compiler installed on your system. **GCC** is recommended for Linux/macOS/WSL, and **MinGW** for Windows. You can check your GCC version by running:
+
 ```bash
 gcc --version
-Archivos Necesarios
-Asegúrate de que los siguientes archivos CSV se encuentren en la misma carpeta que tu archivo de código fuente main.c (y, por lo tanto, en la misma ubicación que tu ejecutable compilado):
+```
 
-ampacity_data.csv
+### Required Files
+Make sure the following CSV files are located in the same directory as your main.c source code file (and, consequently, your compiled executable):
 
-temp_correction_data.csv
+* ampacity_data.csv
 
-num_cond_adj_data.csv
+* temp_correction_data.csv
 
-conduit_fill_data.csv
+* num_cond_adj_data.csv
 
-Pasos para Compilar
-Utiliza gcc (o tu compilador C elegido) para compilar el código. El flag -lm es esencial para vincular la biblioteca matemática (necesaria para funciones como sqrt()):
+*conduit_fill_data.csv
 
-Bash
+### Compilation Steps
+Use gcc (or your chosen C compiler) to compile the code. The -lm flag is essential for linking the math library (needed for functions like sqrt()):
 
+```bash
 gcc main.c -o conductor_selector.exe -lm
-main.c: Tu archivo de código fuente C principal.
+```
+* main.c: Your main C source code file.
 
--o conductor_selector.exe: Especifica el nombre del archivo ejecutable de salida. Puedes cambiar conductor_selector.exe a lo que prefieras (por ejemplo, selector_electrico.exe).
+* -o conductor_selector.exe: Specifies the output executable file name. You can change conductor_selector.exe to anything you prefer (e.g., electrical_selector.exe).
 
--lm: Vincula la biblioteca matemática.
+* -lm: Links the math library.
 
-Pasos para Ejecutar
-Después de una compilación exitosa, ejecuta el programa desde tu terminal:
+### Running the Program
+After successful compilation, run the executable from your terminal:
 
-Bash
-
+```bash
 ./conductor_selector.exe
-El programa te pedirá los datos de entrada y mostrará los resultados. Se pausará al final, esperando que presiones Enter antes de cerrar la ventana de la consola.
+```
+The program will prompt you for input and display the results. It will pause at the end, waiting for you to press Enter before closing the console window.
 
-Instrucciones de Uso
-El programa te guiará paso a paso para ingresar los siguientes parámetros:
+Sample Input Prompts
+The program will guide you step-by-step to enter the following parameters:
 
-Potencia en watts (ejemplo: 10000)
+1. Power in watts (e.g., 10000)
 
-Voltaje del sistema en volts (ejemplo: 220)
+2. System Voltage in volts (e.g., 220)
 
-Factor de potencia (ejemplo: 0.85)
+3. Power Factor (e.g., 0.85)
 
-Número de fases (1 o 3)
+4. Number of Phases (1 or 3)
 
-Longitud del circuito en metros (ejemplo: 50)
+5. Circuit Length in meters (e.g., 50)
 
-Temperatura ambiente en °C (ejemplo: 30)
+6. Ambient Temperature in °C (e.g., 30)
 
-Número de conductores con corriente dentro de la tubería conduit (ejemplo: 3)
+7. Number of Current-Carrying Conductors in conduit (e.g., 3)
 
-Tipo de aislamiento (ejemplo: THHN, THW)
+8. Insulation Type (e.g., THHN, THW)
 
-Tipo de tubería conduit (ejemplo: EMT, PVC)
+9. Conduit Type (e.g., EMT, PVC)
 
-Diámetro nominal de la tubería conduit (ejemplo: 0.5 para 1/2 pulgada, 0.75 para 3/4 pulgada)
+10. Conduit Nominal Diameter (e.g., 0.5 for 1/2 inch, 0.75 for 3/4 inch)
 
-Desglose del Código
-Funciones Clave
-load_ampacity_table_data(const char *arg_file_name_ptr)
+## Code Breakdown
+### Key Functions
+1. load_ampacity_table_data(const char *arg_file_name_ptr)
 
-Carga los datos de ampacidad de los conductores desde un archivo CSV.
+* Loads conductor ampacity data from a CSV file.
 
-load_temperature_correction(const char *arg_file_name_ptr)
+2. load_temperature_correction(const char *arg_file_name_ptr)
 
-Carga los factores de corrección por temperatura desde un archivo CSV.
+* Loads temperature correction factors from a CSV file.
 
-load_nconductor_factor(const char *arg_file_name_ptr)
+3. load_nconductor_factor(const char *arg_file_name_ptr)
 
-Carga los factores de ajuste por el número de conductores desde un archivo CSV.
+* Loads conductor count adjustment factors from a CSV file.
 
-load_conduit_fill_data(const char *arg_file_name_ptr)
+4. load_conduit_fill_data(const char *arg_file_name_ptr)
 
-Carga los datos de llenado de tubería conduit (tipos y áreas) desde un archivo CSV.
+* Loads conduit fill data (types and areas) from a CSV file.
 
-calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count)
+5. calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count)
 
-Calcula la corriente de carga (Ib) según la potencia, voltaje, factor de potencia y número de fases.
+* Calculates the load current (Ib) based on power, voltage, power factor, and number of phases.
 
-calculate_adjusted_current_amps(float arg_load_current_amps, float arg_temp_correction_factor, float arg_num_cond_adjustment_factor)
+6. calculate_adjusted_current_amps(float arg_load_current_amps, float arg_temp_correction_factor, float arg_num_cond_adjustment_factor)
 
-Calcula la corriente de diseño ajustada (Iz) utilizando la corriente de carga y los factores de corrección.
+* Calculates the adjusted design current (Iz) using the load current and correction factors.
 
-get_temp_correction_factor(int arg_ambient_temp)
+7. get_temp_correction_factor(int arg_ambient_temp)
 
-Busca y retorna el factor de corrección de temperatura para una temperatura ambiente dada.
+* Retrieves the temperature correction factor for a given ambient temperature.
 
-get_ncond_adj_factor(int arg_conductor_count)
+8. get_ncond_adj_factor(int arg_conductor_count)
 
-Busca y retorna el factor de ajuste por el número de conductores.
+* Retrieves the adjustment factor for the given number of conductors.
 
-get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps)
+9. get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps)
 
-Determina y retorna el calibre de conductor sugerido (AWG o kcmil) que cumple con la corriente ajustada.
+* Determines and returns the suggested conductor gauge (AWG or kcmil) that meets the adjusted current.
 
-get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches)
+10. get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches)
 
-(Implementación futura) Obtendrá el área interna de una tubería conduit específica.
+* (Future implementation) Will retrieve the internal area of a specific conduit.
 
-Manejo de Entrada y Salida:
+11. Input/Output Handling:
 
-El bucle principal en main() maneja las solicitudes de entrada del usuario y la visualización de resultados. Incluye validación básica de entrada y un mecanismo para pausar la ejecución al finalizar (getchar()).
+* The main loop in main() manages user input requests and result display. It includes basic input validation and a mechanism to pause execution at the end (getchar()).
 
-Códigos de Error (Definidos en #define)
-El programa utiliza códigos de retorno para indicar el éxito o tipos específicos de errores:
+### Error Codes (Defined in #define)
+The program uses return codes to indicate success or specific types of errors:
 
-SUCCESS (0)
+* SUCCESS (0)
 
-ERROR_FILE_OPEN (-1)
+* ERROR_FILE_OPEN (-1)
 
-ERROR_INVALID_INPUT (-2)
+* ERROR_INVALID_INPUT (-2)
 
-ERROR_DATA_NOT_FOUND (-3)
+* ERROR_DATA_NOT_FOUND (-3)
 
-ERROR_PHASE_COUNT (-4)
+* ERROR_PHASE_COUNT (-4)
 
-ERROR_DIVIDE_BYZERO (-5)
+* ERROR_DIVIDE_BYZERO (-5)
 
-Ejemplo de Salida
-Inicio y carga de datos
+## Example Output
+### Program Start and Data Loading
+```bash
 Electrical Conductor Selection Program (NOM-001-SEDE-2012)
 ----------------CS50 PROJECT by @Horfezyn----------------
 
@@ -146,8 +157,10 @@ Action: Loaded X conduit fill data entries from conduit_fill_data.csv.
 
 --- Enter Circuit Parameters ---
 Enter power (Watts, e.g., 10000): 
-Escenario de Cálculo Exitoso
-... (entradas del usuario) ...
+```
+### Successful Calculation Scenario
+```bash
+... (user inputs) ...
 ------------------------------
 
 --- Performing Calculations ---
@@ -157,28 +170,31 @@ Adjusted Design Current (Iz): 53.47 Amps
 Suggested Conductor Gauge: 8 AWG
 
 Press Enter to exit...
-Escenario de Error (Archivo No Encontrado)
+```
+### Error Scenario (File Not Found)
+```bash
 --- Loading NOM Data ---
 Error: Failed to open ampacity_data.csv
 Error loading ampacity data. Exiting program...
 Press Enter to exit...
-Limitaciones Conocidas
-Las funciones get_conductor_resistance_km, get_conductor_reactance_km y get_conductor_mm2 están declaradas pero aún no implementadas para recuperar datos reales.
+```
+### Known Limitations
+* The get_conductor_resistance_km, get_conductor_reactance_km, and get_conductor_mm2 functions are declared but not yet implemented to retrieve actual data.
 
-La validación de entrada del usuario es básica y podría mejorarse para manejar casos más complejos.
+* User input validation is basic and could be enhanced to handle more complex cases.
 
-Actualmente, el tipo de aislamiento y el tipo/diámetro de la tubería conduit se solicitan, pero no influyen directamente en la selección del calibre del conductor en la lógica actual (aunque los datos de conduit se cargan para futura implementación).
+* Currently, insulation type and conduit type/diameter are requested but do not directly influence conductor gauge selection in the current logic (though conduit data is loaded for future implementation).
 
-Mejoras Futuras
-Integrar el cálculo de caída de tensión utilizando la resistencia y reactancia de los conductores.
+### Future Enhancements
+* Integrate voltage drop calculations using conductor resistance and reactance.
 
-Implementar la lógica para la selección de calibre basada en el tipo de aislamiento y la capacidad de llenado de la tubería conduit.
+* Implement logic for conductor gauge selection based on insulation type and conduit fill capacity.
 
-Mejorar la robustez de la validación de entrada del usuario.
+* Improve the robustness of user input validation.
 
-Considerar la implementación de una interfaz gráfica (GUI) para una mejor experiencia de usuario.
+* Consider implementing a Graphical User Interface (GUI) for a better user experience.
 
-Permitir la selección dinámica del tipo de aislamiento para la ampacidad (actualmente fija a 75°C).
+* Allow dynamic selection of insulation type for ampacity (currently fixed at 75°C).
 
-Licencia
-Este proyecto está licenciado bajo la Licencia MIT.
+## License
+This project is licensed under the MIT License.
