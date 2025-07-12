@@ -42,11 +42,11 @@ Make sure the following CSV files are located in the same directory as your main
 Use gcc (or your chosen C compiler) to compile the code. The -lm flag is essential for linking the math library (needed for functions like sqrt()):
 
 ```bash
-gcc main.c -o conductor_selector.exe -lm
+gcc wiring.c -o wiring.exe -lm
 ```
-* main.c: Your main C source code file.
+* wiring.c: Your main C source code file.
 
-* -o conductor_selector.exe: Specifies the output executable file name. You can change conductor_selector.exe to anything you prefer (e.g., electrical_selector.exe).
+* -o wiring.exe: Specifies the output executable file name. You can change wiring.exe to anything you prefer (e.g., electrical_selector.exe).
 
 * -lm: Links the math library.
 
