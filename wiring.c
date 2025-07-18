@@ -4,12 +4,12 @@
 #include <string.h> // For string manipulation (strcpy, strtok, strcmp)
 
 // --- Error Codes ---
-#define SUCCESS                 0
-#define ERROR_FILE_OPEN         -1
-#define ERROR_INVALID_INPUT     -2
-#define ERROR_DATA_NOT_FOUND    -3
-#define ERROR_PHASE_COUNT       -4
-#define ERROR_DIVIDE_BYZERO     -5
+#define SUCCESS                 (0)
+#define ERROR_FILE_OPEN         (-1)
+#define ERROR_INVALID_INPUT     (-2)
+#define ERROR_DATA_NOT_FOUND    (-3)
+#define ERROR_PHASE_COUNT       (-4)
+#define ERROR_DIVIDE_BYZERO     (-5)
 
 // --- Macro for print the error ---
 #define REPORT_ERROR(message) fprintf(stderr, "Error: %s\n",message)
@@ -243,13 +243,13 @@ int main() {
     // Suggested gauge
     local_suggested_gauge_awg_kcmil = get_suggested_gauge_awg_kcmil(local_adjusted_current_amps);
     printf("Suggested Conductor Gauge: ");
-    if (local_suggested_gauge_awg_kcmil == 0) {
+    if (local_suggested_gauge_awg_kcmil == 110) {
         printf("1/0 AWG\n");
-    } else if (local_suggested_gauge_awg_kcmil == -1) {
+    } else if (local_suggested_gauge_awg_kcmil == 120) {
         printf("2/0 AWG\n");
-    } else if (local_suggested_gauge_awg_kcmil == -2) {
+    } else if (local_suggested_gauge_awg_kcmil == 130) {
         printf("3/0 AWG\n");
-    } else if (local_suggested_gauge_awg_kcmil == -3) {
+    } else if (local_suggested_gauge_awg_kcmil == 140) {
         printf("4/0 AWG\n");
     } else if (local_suggested_gauge_awg_kcmil >= 250) {
         printf("%d kcmil\n", local_suggested_gauge_awg_kcmil);
