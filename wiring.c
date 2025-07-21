@@ -250,7 +250,7 @@ int main() {
     printf("Adjusted Design Current (Iz): %.2f Amps\n", local_adjusted_current_amps);
     
     // Suggested gauge
-    local_suggested_gauge_awg_kcmil = get_suggested_gauge_awg_kcmil(local_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating);
+    local_suggested_gauge_awg_kcmil = get_suggested_gauge_awg_kcmil(local_adjusted_current_amps, local_insulation_type, local_insulation_temperature_rating);
     printf("Suggested Conductor Gauge: ");
     if (local_suggested_gauge_awg_kcmil == 110) {
         printf("1/0 AWG\n");
@@ -309,7 +309,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
         // Use a temporary buffer for strtok as it modifies the string -> Recommended in Clion
         char temp_line[256]; 
         strcpy(temp_line, line); // Copy the line to a temporary buffer
-
         char *token;
 
         // 1. Gauge_AWG_kcmil
@@ -321,7 +320,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 2. Insulation_Type
         token = strtok(NULL, ",");
         if (token) {
@@ -335,7 +333,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 3. Ampacity_75C
         token = strtok(NULL, ",");
         if (token) {
@@ -345,7 +342,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 4. Ampacity_90C
         token = strtok(NULL, ",");
         if (token) {
@@ -355,7 +351,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 5. Area_mm2
         token = strtok(NULL, ",");
         if (token) {
@@ -365,7 +360,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 6. Resistance_ohm_km
         token = strtok(NULL, ",");
         if (token) {
@@ -375,7 +369,6 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-
         // 7. Reactance_ohm_km
         token = strtok(NULL, "\n"); 
         if (token) {
@@ -541,7 +534,6 @@ int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps,const char *ar
         return ERROR_INVALID_INPUT;
     }
     for (int i = 0; i < g_conductor_count; i++){
-        if (strcmp(g_conductor_data_g_list[i].sc_insulation_type, arg_insulation_type_ptr) == 0) {
             float ampacity_to_check;
             if (arg_temp_rating == 90) {
                 ampacity_to_check = g_conductor_data_g_list[i].sc_ampacity_at_90c_amps;
@@ -552,7 +544,6 @@ int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps,const char *ar
             if (ampacity_to_check >= arg_adjusted_current_amps){
                 return g_conductor_data_g_list[i].sc_gauge_awg_kcmil;
             }
-        }
     }
     REPORT_ERROR("No conductor gauge found for the adjusted current");
     return ERROR_DATA_NOT_FOUND;
