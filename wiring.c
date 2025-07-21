@@ -66,7 +66,7 @@ float get_conductor_mm2(int arg_gauge_awg_kcmil);
 float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // Selection and validation
-int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps); // For simplicity only use the adjusted current
+int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating); // Now we use the type of insulation and the temp rating
 
 // --- Global variables ---
 Conductor g_conductor_data_g_list[20]; // General structure filled with DATA from CSV files, max. 20 types of conductor.
@@ -94,6 +94,7 @@ int main() {
     char local_insulation_type[32];
     char local_conduit_type[32];
     float local_conduit_diameter;
+    int local_insulation_temperature_rating;
 
     // Local variables calculated
     float local_load_current_amps;
@@ -194,6 +195,14 @@ int main() {
 
     printf("Enter insulation type (e.g., THHN, THW): "); // Insultation type
     scanf("%s", local_insulation_type);
+    do {
+        printf("Enter insulation temperature rating (75 or 90): ");
+        if (scanf("%d", &local_insulation_temperature_rating) != 1 || (local_insulation_temperature_rating != 75 && local_insulation_temperature_rating != 90)) {
+            REPORT_ERROR("Invalid input for insulation temperature rating. Please enter 75 or 90.");
+            while (getchar() != '\n');
+            local_insulation_temperature_rating = 0; // Set to 0 to re-enter loop
+        }
+    } while (local_insulation_temperature_rating != 75 && local_insulation_temperature_rating != 90);
 
     printf("Enter conduit type (e.g., EMT, PVC): "); // Conduit type
     scanf("%s", local_conduit_type);
@@ -241,7 +250,7 @@ int main() {
     printf("Adjusted Design Current (Iz): %.2f Amps\n", local_adjusted_current_amps);
     
     // Suggested gauge
-    local_suggested_gauge_awg_kcmil = get_suggested_gauge_awg_kcmil(local_adjusted_current_amps);
+    local_suggested_gauge_awg_kcmil = get_suggested_gauge_awg_kcmil(local_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating);
     printf("Suggested Conductor Gauge: ");
     if (local_suggested_gauge_awg_kcmil == 110) {
         printf("1/0 AWG\n");
@@ -255,6 +264,24 @@ int main() {
         printf("%d kcmil\n", local_suggested_gauge_awg_kcmil);
     } else if (local_suggested_gauge_awg_kcmil > 0) {
         printf("%d AWG\n", local_suggested_gauge_awg_kcmil);
+    }
+    // Propierties for the conductor calculated.
+    if (local_suggested_gauge_awg_kcmil > 0 || local_suggested_gauge_awg_kcmil == 110 || local_suggested_gauge_awg_kcmil == 120 || local_suggested_gauge_awg_kcmil == 130 || local_suggested_gauge_awg_kcmil == 140) { // Check for valid gauge returned
+        float conductor_area = get_conductor_mm2(local_suggested_gauge_awg_kcmil);
+        float conductor_resistance = get_conductor_resistance_km(local_suggested_gauge_awg_kcmil);
+        float conductor_reactance = get_conductor_reactance_km(local_suggested_gauge_awg_kcmil);
+
+        if (conductor_area != (float)ERROR_DATA_NOT_FOUND &&
+            conductor_resistance != (float)ERROR_DATA_NOT_FOUND &&
+            conductor_reactance != (float)ERROR_DATA_NOT_FOUND) {
+            printf("Conductor Area: %.2f mm^2\n", conductor_area);
+            printf("Conductor Resistance: %.4f Ohm/km\n", conductor_resistance);
+            printf("Conductor Reactance: %.4f Ohm/km\n", conductor_reactance);
+        } else {
+            printf("Could not retrieve all properties for the suggested conductor gauge.\n");
+        }
+    } else {
+        printf("No valid conductor gauge was suggested.\n");
     }
 
     // Pausa antes de cerrar el .exe
@@ -278,25 +305,85 @@ int load_ampacity_table_data(const char *arg_file_name_ptr) {
     fgets(line, sizeof(line),file_ptr); // Skip header
 
     g_conductor_count = 0;
-    while (fgets(line, sizeof(line), file_ptr) != NULL && g_conductor_count < 20){ // Changed condition and hardcoded 20
+    while (fgets(line, sizeof(line), file_ptr) != NULL && g_conductor_count < 20){
+        // Use a temporary buffer for strtok as it modifies the string -> Recommended in Clion
+        char temp_line[256]; 
+        strcpy(temp_line, line); // Copy the line to a temporary buffer
+
         char *token;
 
-        token = strtok(line, ",");
+        // 1. Gauge_AWG_kcmil
+        token = strtok(temp_line, ",");
         if (token) {
             g_conductor_data_g_list[g_conductor_count].sc_gauge_awg_kcmil = atoi(token);
         } else {
             REPORT_ERROR("Invalid format in ampacity_data.csv: Gauge not found.");
             fclose(file_ptr);
-            return ERROR_INVALID_INPUT; // Or a more specific parsing error
+            return ERROR_INVALID_INPUT;
         }
 
+        // 2. Insulation_Type
+        token = strtok(NULL, ",");
+        if (token) {
+            size_t len = strlen(token);
+            if (len > 0 && token[len - 1] == '\n') {
+                token[len - 1] = '\0';
+            }
+            strcpy(g_conductor_data_g_list[g_conductor_count].sc_insulation_type, token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Insulation Type not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 3. Ampacity_75C
         token = strtok(NULL, ",");
         if (token) {
             g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_75c_amps = atof(token);
         } else {
-            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity not found.");
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity 75C not found.");
             fclose(file_ptr);
-            return ERROR_INVALID_INPUT; // Or a more specific parsing error
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 4. Ampacity_90C
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_ampacity_at_90c_amps = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Ampacity 90C not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 5. Area_mm2
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_area_mm2 = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Area mm2 not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 6. Resistance_ohm_km
+        token = strtok(NULL, ",");
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_resistance_km = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Resistance not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
+        }
+
+        // 7. Reactance_ohm_km
+        token = strtok(NULL, "\n"); 
+        if (token) {
+            g_conductor_data_g_list[g_conductor_count].sc_reactance_km = atof(token);
+        } else {
+            REPORT_ERROR("Invalid format in ampacity_data.csv: Reactance not found.");
+            fclose(file_ptr);
+            return ERROR_INVALID_INPUT;
         }
         g_conductor_count++;
     }
@@ -446,16 +533,25 @@ float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_tem
 }
 
 // Suggested gauge only using the adjustmen current
-int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps){
-    printf("Action: Getting suggested gauge for %.2f Amps with insulation type THHW.\n", arg_adjusted_current_amps);
+int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps,const char *arg_insulation_type_ptr, int arg_temp_rating){
+    printf("Action: Getting suggested gauge for %.2f Amps with insulation %s and temperature rating %dC.\n", arg_adjusted_current_amps, arg_insulation_type_ptr, arg_temp_rating);
 
     if (arg_adjusted_current_amps <=0){
         REPORT_ERROR("Adjusted current must be positive to find a gauge.");
         return ERROR_INVALID_INPUT;
     }
     for (int i = 0; i < g_conductor_count; i++){
-        if (g_conductor_data_g_list[i].sc_ampacity_at_75c_amps >= arg_adjusted_current_amps){
-            return g_conductor_data_g_list[i].sc_gauge_awg_kcmil;
+        if (strcmp(g_conductor_data_g_list[i].sc_insulation_type, arg_insulation_type_ptr) == 0) {
+            float ampacity_to_check;
+            if (arg_temp_rating == 90) {
+                ampacity_to_check = g_conductor_data_g_list[i].sc_ampacity_at_90c_amps;
+            } else { // Default to 75C if not 90C or if invalid input
+                ampacity_to_check = g_conductor_data_g_list[i].sc_ampacity_at_75c_amps;
+            }
+
+            if (ampacity_to_check >= arg_adjusted_current_amps){
+                return g_conductor_data_g_list[i].sc_gauge_awg_kcmil;
+            }
         }
     }
     REPORT_ERROR("No conductor gauge found for the adjusted current");
@@ -481,5 +577,35 @@ float get_ncond_adj_factor(int arg_conductor_count){
         }
     }
     REPORT_ERROR("Number of conductors adjustemnt factor not found for the given count.");
+    return (float)ERROR_DATA_NOT_FOUND;
+}
+// Resistance for the conductor calculated
+float get_conductor_resistance_km(int arg_gauge_awg_kcmil) {
+    for (int i = 0; i < g_conductor_count; i++) {
+        if (g_conductor_data_g_list[i].sc_gauge_awg_kcmil == arg_gauge_awg_kcmil) {
+            return g_conductor_data_g_list[i].sc_resistance_km;
+        }
+    }
+    REPORT_ERROR("Conductor resistance not found for the given gauge.");
+    return (float)ERROR_DATA_NOT_FOUND;
+}
+// Reactance for the conductor calculated
+float get_conductor_reactance_km(int arg_gauge_awg_kcmil) {
+    for (int i = 0; i < g_conductor_count; i++) {
+        if (g_conductor_data_g_list[i].sc_gauge_awg_kcmil == arg_gauge_awg_kcmil) {
+            return g_conductor_data_g_list[i].sc_reactance_km;
+        }
+    }
+    REPORT_ERROR("Conductor reactance not found for the given gauge.");
+    return (float)ERROR_DATA_NOT_FOUND;
+}
+// Area in mm2 for the conductor calculated
+float get_conductor_mm2(int arg_gauge_awg_kcmil) {
+    for (int i = 0; i < g_conductor_count; i++) {
+        if (g_conductor_data_g_list[i].sc_gauge_awg_kcmil == arg_gauge_awg_kcmil) {
+            return g_conductor_data_g_list[i].sc_area_mm2;
+        }
+    }
+    REPORT_ERROR("Conductor area not found for the given gauge.");
     return (float)ERROR_DATA_NOT_FOUND;
 }
