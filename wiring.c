@@ -56,6 +56,7 @@ int load_conduit_fill_data(const char *arg_file_name_ptr); // function to load t
 // Calculation base
 float calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count); // Initial current calculation
 float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_temp_correction_factor, float arg_num_cond_adjustment_factor); //
+float calculate_voltage_drop_volts(float arg_load_Current_amps, float arg_circuit_lenght_meters, float arg_resistance_per_km, float arg_reactance_per_km, float arg_power_factor, int arg_phase_count);
 
 // Data retrieval 
 float get_temp_correction_factor(int arg_ambient_temp); // Get the temp correction fator based on ambien temperature.
@@ -95,6 +96,7 @@ int main() {
     char local_conduit_type[32];
     float local_conduit_diameter;
     int local_insulation_temperature_rating;
+    float local_voltage_drop_volts;
 
     // Local variables calculated
     float local_load_current_amps;
@@ -277,6 +279,27 @@ int main() {
             printf("Conductor Area: %.2f mm^2\n", conductor_area);
             printf("Conductor Resistance: %.4f Ohm/km\n", conductor_resistance);
             printf("Conductor Reactance: %.4f Ohm/km\n", conductor_reactance);
+
+            // --- New: Voltage Drop Calculation ---
+            local_voltage_drop_volts = calculate_voltage_drop_volts(
+                local_load_current_amps,
+                local_circuit_length_meters,
+                conductor_resistance,
+                conductor_reactance,
+                local_power_factor,
+                local_phase_count
+            );
+
+            if (local_voltage_drop_volts >= 0) { // Check for calculation errors
+                printf("Calculated Voltage Drop: %.2f Volts\n", local_voltage_drop_volts);
+                float max_allowed_vd = local_voltage_volts * 0.03f; // 3% voltage drop
+                if (local_voltage_drop_volts > max_allowed_vd) {
+                    printf("WARNING: Voltage drop (%.2fV) exceeds the recommended 3%% limit (%.2fV).\n", local_voltage_drop_volts, max_allowed_vd);
+                }
+            } else {
+                printf("Error calculating voltage drop. Error code: %d.\n", (int)local_voltage_drop_volts);
+            }
+
         } else {
             printf("Could not retrieve all properties for the suggested conductor gauge.\n");
         }
@@ -599,4 +622,27 @@ float get_conductor_mm2(int arg_gauge_awg_kcmil) {
     }
     REPORT_ERROR("Conductor area not found for the given gauge.");
     return (float)ERROR_DATA_NOT_FOUND;
+}
+
+// Voltage Drop Calculation
+float calculate_voltage_drop_volts(float arg_load_current_amps, float arg_circuit_length_meters, float arg_resistance_per_km, float arg_reactance_per_km, float arg_power_factor, int arg_phase_count) {
+    if (arg_resistance_per_km < 0 || arg_reactance_per_km < 0 || arg_circuit_length_meters < 0) {
+        REPORT_ERROR("Resistance, reactance, or circuit length cannot be negative for voltage drop calculation.");
+        return (float)ERROR_INVALID_INPUT;
+    }
+
+    float local_circuit_length_km = arg_circuit_length_meters / 1000.0f;
+    float local_sin_phi = sqrt(1.0f - (arg_power_factor * arg_power_factor));
+    float local_effective_resistance = (arg_resistance_per_km * arg_power_factor) + (arg_reactance_per_km * local_sin_phi);
+
+    float local_voltage_drop;
+    if (arg_phase_count == 1) { // Single-phase
+        local_voltage_drop = 2 * arg_load_current_amps * local_circuit_length_km * local_effective_resistance;
+    } else if (arg_phase_count == 3) { // Three-phase
+        local_voltage_drop = sqrt(3.0f) * arg_load_current_amps * local_circuit_length_km * local_effective_resistance;
+    } else {
+        REPORT_ERROR("Unsupported number of phases for voltage drop calculation.");
+        return (float)ERROR_PHASE_COUNT;
+    }
+    return local_voltage_drop;
 }
