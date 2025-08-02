@@ -2,6 +2,7 @@
 #include <stdlib.h> // For general utilities (malloc, free)
 #include <math.h> // For matemathical functions (sqrt, pow)
 #include <string.h> // For string manipulation (strcpy, strtok, strcmp)
+#include <strings.h> // For strcasecmp
 
 // --- Error Codes ---
 #define SUCCESS                 (0)
@@ -106,6 +107,7 @@ int main() {
     float local_adjusted_current_amps;
     int local_suggested_gauge_awg_kcmil;
     int return_code;    // To return values from functions.
+    int local_conduit_fill_check_result;
     
     // --- A little presentation ---
     printf("\n\nElectrical Conductor Selection Program (NOM-001-SEDE-2012)\n");
@@ -274,22 +276,13 @@ int main() {
         float conductor_resistance = get_conductor_resistance_km(local_suggested_gauge_awg_kcmil);
         float conductor_reactance = get_conductor_reactance_km(local_suggested_gauge_awg_kcmil);
 
-        if (conductor_area != (float)ERROR_DATA_NOT_FOUND &&
-            conductor_resistance != (float)ERROR_DATA_NOT_FOUND &&
-            conductor_reactance != (float)ERROR_DATA_NOT_FOUND) {
+        if (conductor_area != (float)ERROR_DATA_NOT_FOUND && conductor_resistance != (float)ERROR_DATA_NOT_FOUND && conductor_reactance != (float)ERROR_DATA_NOT_FOUND) {
             printf("Conductor Area: %.2f mm^2\n", conductor_area);
             printf("Conductor Resistance: %.4f Ohm/km\n", conductor_resistance);
             printf("Conductor Reactance: %.4f Ohm/km\n", conductor_reactance);
 
-            // --- New: Voltage Drop Calculation ---
-            local_voltage_drop_volts = calculate_voltage_drop_volts(
-                local_load_current_amps,
-                local_circuit_length_meters,
-                conductor_resistance,
-                conductor_reactance,
-                local_power_factor,
-                local_phase_count
-            );
+            // Voltage drop section
+            local_voltage_drop_volts = calculate_voltage_drop_volts(local_load_current_amps, local_circuit_length_meters, conductor_resistance, conductor_reactance, local_power_factor, local_phase_count);
 
             if (local_voltage_drop_volts >= 0) { // Check for calculation errors
                 printf("Calculated Voltage Drop: %.2f Volts\n", local_voltage_drop_volts);
@@ -300,6 +293,9 @@ int main() {
             } else {
                 printf("Error calculating voltage drop. Error code: %d.\n", (int)local_voltage_drop_volts);
             }
+
+            // Conduit fill check
+            local_conduit_fill_check_result = check_conduit_fill(conductor_area, local_conductor_count, local_conduit_type, local_conduit_diameter);
 
         } else {
             printf("Could not retrieve all properties for the suggested conductor gauge.\n");
@@ -651,8 +647,8 @@ float calculate_voltage_drop_volts(float arg_load_current_amps, float arg_circui
 // Conduit area based on user input
 float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches) {
     for (int i = 0; i < g_conduit_count; i++) {
-        // Compare conduit type and diameter
-        if (strcmp(g_conduit_data_g_list[i].sc_conduit_type, arg_conduit_type_ptr) == 0 &&
+        // Usamos una comparación sin mayúsculas y minúsculas para mayor robustez
+        if (strcasecmp(g_conduit_data_g_list[i].sc_conduit_type, arg_conduit_type_ptr) == 0 &&
             fabs(g_conduit_data_g_list[i].sc_diameter_inches - arg_conduit_diameter_nominal_inches) < 0.001) {
             return g_conduit_data_g_list[i].sc_internal_area_mm2;
         }
