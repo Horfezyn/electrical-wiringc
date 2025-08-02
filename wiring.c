@@ -59,22 +59,23 @@ float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_tem
 float calculate_voltage_drop_volts(float arg_load_Current_amps, float arg_circuit_lenght_meters, float arg_resistance_per_km, float arg_reactance_per_km, float arg_power_factor, int arg_phase_count);
 
 // Data retrieval 
-float get_temp_correction_factor(int arg_ambient_temp); // Get the temp correction fator based on ambien temperature.
-float get_ncond_adj_factor(int arg_conductor_count); // Get the correction factor for the number of conductors.
+float get_temp_correction_factor(int arg_ambient_temp);
+float get_ncond_adj_factor(int arg_conductor_count);
 float get_conductor_resistance_km(int arg_gauge_awg_kcmil);
 float get_conductor_reactance_km(int arg_gauge_awg_kcmil);
 float get_conductor_mm2(int arg_gauge_awg_kcmil);
 float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // Selection and validation
-int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating); // Now we use the type of insulation and the temp rating
+int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating);
+int check_conduit_fill(float arg_conductor_area, int arg_conductor_count, const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // --- Global variables ---
 Conductor g_conductor_data_g_list[20]; // General structure filled with DATA from CSV files, max. 20 types of conductor.
 int g_conductor_count = 0; // For the number of conductors in the csv file.
 
 TempCorrectionFactor g_temp_factors_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
-int g_temp_correction_count = 0; // For the number of correction factors in the CSV file.
+int g_temp_correction_count = 0; // For the number of correction factors in the CSV file
 
 NumCondFactor g_ncond_adj_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
 int g_ncond_adj_count = 0; // For the number of correction factors in the CSV file.
