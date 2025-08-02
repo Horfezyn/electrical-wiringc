@@ -647,7 +647,6 @@ float calculate_voltage_drop_volts(float arg_load_current_amps, float arg_circui
 // Conduit area based on user input
 float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches) {
     for (int i = 0; i < g_conduit_count; i++) {
-        // Usamos una comparación sin mayúsculas y minúsculas para mayor robustez
         if (strcasecmp(g_conduit_data_g_list[i].sc_conduit_type, arg_conduit_type_ptr) == 0 &&
             fabs(g_conduit_data_g_list[i].sc_diameter_inches - arg_conduit_diameter_nominal_inches) < 0.001) {
             return g_conduit_data_g_list[i].sc_internal_area_mm2;
@@ -668,7 +667,7 @@ int check_conduit_fill(float arg_conductor_area, int arg_conductor_count, const 
     float local_conduit_area = get_conduit_area(arg_conduit_type_ptr, arg_conduit_diameter_nominal_inches);
     
     if (local_conduit_area < 0) {
-        return (int)local_conduit_area; // Propagate the error code
+        return (int)local_conduit_area;
     }
 
     float local_fill_percentage = (local_total_conductor_area / local_conduit_area) * 100.0f;
