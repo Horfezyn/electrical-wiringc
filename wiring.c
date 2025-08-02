@@ -647,3 +647,46 @@ float calculate_voltage_drop_volts(float arg_load_current_amps, float arg_circui
     }
     return local_voltage_drop;
 }
+
+// Conduit area based on user input
+float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches) {
+    for (int i = 0; i < g_conduit_count; i++) {
+        // Compare conduit type and diameter
+        if (strcmp(g_conduit_data_g_list[i].sc_conduit_type, arg_conduit_type_ptr) == 0 &&
+            fabs(g_conduit_data_g_list[i].sc_diameter_inches - arg_conduit_diameter_nominal_inches) < 0.001) {
+            return g_conduit_data_g_list[i].sc_internal_area_mm2;
+        }
+    }
+    REPORT_ERROR("Conduit type and diameter not found in data.");
+    return (float)ERROR_DATA_NOT_FOUND;
+}
+
+// Check conduit fill
+int check_conduit_fill(float arg_conductor_area, int arg_conductor_count, const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches){
+    if (arg_conductor_area <= 0 || arg_conductor_count <= 0) {
+        REPORT_ERROR("Conductor area and count must be positive for fill check.");
+        return ERROR_INVALID_INPUT;
+    }
+
+    float local_total_conductor_area = arg_conductor_area * arg_conductor_count;
+    float local_conduit_area = get_conduit_area(arg_conduit_type_ptr, arg_conduit_diameter_nominal_inches);
+    
+    if (local_conduit_area < 0) {
+        return (int)local_conduit_area; // Propagate the error code
+    }
+
+    float local_fill_percentage = (local_total_conductor_area / local_conduit_area) * 100.0f;
+
+    printf("Conduit Fill Calculation:\n");
+    printf("Total conductor area: %.2f mm²\n", local_total_conductor_area);
+    printf("Conduit internal area: %.2f mm²\n", local_conduit_area);
+    printf("Conduit fill percentage: %.2f%%\n", local_fill_percentage);
+
+    if (local_fill_percentage <= 40.0f) {
+        printf("RESULT: The conduit fill of %.2f%% is within the acceptable limit (40%%).\n", local_fill_percentage);
+        return SUCCESS;
+    } else {
+        printf("WARNING: The conduit fill of %.2f%% exceeds the recommended 40%% limit. A larger conduit may be required.\n", local_fill_percentage);
+        return ERROR_INVALID_INPUT;
+    }
+}
