@@ -479,7 +479,7 @@ int load_conduit_fill_data(const char *arg_file_name_ptr){
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-        g_conductor_count++;
+        g_conduit_count++;
     }
     fclose(file_ptr);
     printf("Action: Loaded %d conduit fill data entries from %s. \n", g_conductor_count,arg_file_name_ptr);
