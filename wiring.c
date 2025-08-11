@@ -2,6 +2,7 @@
 #include <stdlib.h> // For general utilities (malloc, free)
 #include <math.h> // For matemathical functions (sqrt, pow)
 #include <string.h> // For string manipulation (strcpy, strtok, strcmp)
+#include <strings.h> // For strcasecmp
 
 // --- Error Codes ---
 #define SUCCESS                 (0)
@@ -59,22 +60,23 @@ float calculate_adjusted_current_amps(float arg_load_current_amps, float arg_tem
 float calculate_voltage_drop_volts(float arg_load_Current_amps, float arg_circuit_lenght_meters, float arg_resistance_per_km, float arg_reactance_per_km, float arg_power_factor, int arg_phase_count);
 
 // Data retrieval 
-float get_temp_correction_factor(int arg_ambient_temp); // Get the temp correction fator based on ambien temperature.
-float get_ncond_adj_factor(int arg_conductor_count); // Get the correction factor for the number of conductors.
+float get_temp_correction_factor(int arg_ambient_temp);
+float get_ncond_adj_factor(int arg_conductor_count);
 float get_conductor_resistance_km(int arg_gauge_awg_kcmil);
 float get_conductor_reactance_km(int arg_gauge_awg_kcmil);
 float get_conductor_mm2(int arg_gauge_awg_kcmil);
 float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // Selection and validation
-int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating); // Now we use the type of insulation and the temp rating
+int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating);
+int check_conduit_fill(float arg_conductor_area, int arg_conductor_count, const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches);
 
 // --- Global variables ---
 Conductor g_conductor_data_g_list[20]; // General structure filled with DATA from CSV files, max. 20 types of conductor.
 int g_conductor_count = 0; // For the number of conductors in the csv file.
 
 TempCorrectionFactor g_temp_factors_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
-int g_temp_correction_count = 0; // For the number of correction factors in the CSV file.
+int g_temp_correction_count = 0; // For the number of correction factors in the CSV file
 
 NumCondFactor g_ncond_adj_g_list[20]; // General structure filled with DATA from CSV file, max 20 types of factors
 int g_ncond_adj_count = 0; // For the number of correction factors in the CSV file.
@@ -105,6 +107,7 @@ int main() {
     float local_adjusted_current_amps;
     int local_suggested_gauge_awg_kcmil;
     int return_code;    // To return values from functions.
+    int local_conduit_fill_check_result;
     
     // --- A little presentation ---
     printf("\n\nElectrical Conductor Selection Program (NOM-001-SEDE-2012)\n");
@@ -273,22 +276,13 @@ int main() {
         float conductor_resistance = get_conductor_resistance_km(local_suggested_gauge_awg_kcmil);
         float conductor_reactance = get_conductor_reactance_km(local_suggested_gauge_awg_kcmil);
 
-        if (conductor_area != (float)ERROR_DATA_NOT_FOUND &&
-            conductor_resistance != (float)ERROR_DATA_NOT_FOUND &&
-            conductor_reactance != (float)ERROR_DATA_NOT_FOUND) {
+        if (conductor_area != (float)ERROR_DATA_NOT_FOUND && conductor_resistance != (float)ERROR_DATA_NOT_FOUND && conductor_reactance != (float)ERROR_DATA_NOT_FOUND) {
             printf("Conductor Area: %.2f mm^2\n", conductor_area);
             printf("Conductor Resistance: %.4f Ohm/km\n", conductor_resistance);
             printf("Conductor Reactance: %.4f Ohm/km\n", conductor_reactance);
 
-            // --- New: Voltage Drop Calculation ---
-            local_voltage_drop_volts = calculate_voltage_drop_volts(
-                local_load_current_amps,
-                local_circuit_length_meters,
-                conductor_resistance,
-                conductor_reactance,
-                local_power_factor,
-                local_phase_count
-            );
+            // Voltage drop section
+            local_voltage_drop_volts = calculate_voltage_drop_volts(local_load_current_amps, local_circuit_length_meters, conductor_resistance, conductor_reactance, local_power_factor, local_phase_count);
 
             if (local_voltage_drop_volts >= 0) { // Check for calculation errors
                 printf("Calculated Voltage Drop: %.2f Volts\n", local_voltage_drop_volts);
@@ -299,6 +293,9 @@ int main() {
             } else {
                 printf("Error calculating voltage drop. Error code: %d.\n", (int)local_voltage_drop_volts);
             }
+
+            // Conduit fill check
+            local_conduit_fill_check_result = check_conduit_fill(conductor_area, local_conductor_count, local_conduit_type, local_conduit_diameter);
 
         } else {
             printf("Could not retrieve all properties for the suggested conductor gauge.\n");
@@ -482,7 +479,7 @@ int load_conduit_fill_data(const char *arg_file_name_ptr){
             fclose(file_ptr);
             return ERROR_INVALID_INPUT;
         }
-        g_conductor_count++;
+        g_conduit_count++;
     }
     fclose(file_ptr);
     printf("Action: Loaded %d conduit fill data entries from %s. \n", g_conductor_count,arg_file_name_ptr);
@@ -645,4 +642,46 @@ float calculate_voltage_drop_volts(float arg_load_current_amps, float arg_circui
         return (float)ERROR_PHASE_COUNT;
     }
     return local_voltage_drop;
+}
+
+// Conduit area based on user input
+float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches) {
+    for (int i = 0; i < g_conduit_count; i++) {
+        if (strcasecmp(g_conduit_data_g_list[i].sc_conduit_type, arg_conduit_type_ptr) == 0 &&
+            fabs(g_conduit_data_g_list[i].sc_diameter_inches - arg_conduit_diameter_nominal_inches) < 0.001) {
+            return g_conduit_data_g_list[i].sc_internal_area_mm2;
+        }
+    }
+    REPORT_ERROR("Conduit type and diameter not found in data.");
+    return (float)ERROR_DATA_NOT_FOUND;
+}
+
+// Check conduit fill
+int check_conduit_fill(float arg_conductor_area, int arg_conductor_count, const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches){
+    if (arg_conductor_area <= 0 || arg_conductor_count <= 0) {
+        REPORT_ERROR("Conductor area and count must be positive for fill check.");
+        return ERROR_INVALID_INPUT;
+    }
+
+    float local_total_conductor_area = arg_conductor_area * arg_conductor_count;
+    float local_conduit_area = get_conduit_area(arg_conduit_type_ptr, arg_conduit_diameter_nominal_inches);
+    
+    if (local_conduit_area < 0) {
+        return (int)local_conduit_area;
+    }
+
+    float local_fill_percentage = (local_total_conductor_area / local_conduit_area) * 100.0f;
+
+    printf("Conduit Fill Calculation:\n");
+    printf("Total conductor area: %.2f mm²\n", local_total_conductor_area);
+    printf("Conduit internal area: %.2f mm²\n", local_conduit_area);
+    printf("Conduit fill percentage: %.2f%%\n", local_fill_percentage);
+
+    if (local_fill_percentage <= 40.0f) {
+        printf("RESULT: The conduit fill of %.2f%% is within the acceptable limit (40%%).\n", local_fill_percentage);
+        return SUCCESS;
+    } else {
+        printf("WARNING: The conduit fill of %.2f%% exceeds the recommended 40%% limit. A larger conduit may be required.\n", local_fill_percentage);
+        return ERROR_INVALID_INPUT;
+    }
 }
