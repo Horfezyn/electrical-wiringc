@@ -1,34 +1,29 @@
-# Electrical Conductor Selection Tool
+# Electrical Conductor Selection
+#### Video Demo: <URL>
+-
+## Project Overview
+This program is a prototype tool designed to assist in the proper selection of electrical conductors according to the guidelines of NOM-001-SEDE-2012
+The project seeks to simplify the electrical design process, ensuring that the selected conductors comply with current regulatory requeriments in Mexico. It automates key calculations based on user input and standard data tables, presenting the results in a clear Text-based User Interface (TUI) within the console.
+-
+## Main features
+* **NOM Data Loading:** Reads crucial electrical data (ampacity, temperature correction, conductor adjustment, conduit propierties) from CSV files with robust parsing.
+* **Load Current Calculation (Ib):** Calculates the adjusted current applying temperatura and grouping factors.
+* **Adjusted Design Current Calculation (Iz):** Calculates the adjusted current applying temperature and grouping factors.
+* **Conductor Gauge Selection:** Determines the appropriate conductor gauge (AWG/kcmil) meeting the adjusted current, **required insulation type**, and temperature rating (75°C or 90°C).
+* **Conductor Property Retrieval:** Efficiently fetches area, resistance, and reactance for the suggested conductor.
+* **Voltage Drop Calculation:** Computes the voltage drop based on conductor properties, load current, and circuit length, comparing it against the 3% NOM limit.
+* **Conduit Fill Check:** Calculates the percentage fill of the specified conduit and checks against the 40% limit.
+* **Text-based User Interface (TUI):** Clears the screen after input and presents calculation results within an ASCII-drawn box for enhanced readability using platform-specific console functions (`gotoxy` via `windows.h` or ANSI escape codes).
+* **Portable Code:** Uses standard C libraries and includes portable functions for case-insensitive string comparison and whitespace trimming.
+-
 
-## Overview
-
-This C program is a prototype tool designed to assist in the proper selection of electrical conductors, adhering to the guidelines set forth in **NOM-001-SEDE-2012** (Mexican Official Standard for Electrical Installations). The project aims to simplify the electrical design process, ensuring that selected conductors comply with current regulatory requirements in Mexico.
-
----
-
-## Features
-
-* **NOM Data Loading:** Reads crucial electrical data (ampacity, temperature correction factors, number of conductors adjustment factors, and conduit fill data) from CSV files.
-* **Load Current Calculation (Ib):** Computes the load current based on user-provided power, voltage, power factor, and number of phases (1 or 3).
-* **Adjusted Design Current Calculation (Iz):** Calculates the adjusted current by applying temperature correction and number of conductors adjustment factors to the load current.
-* **Suggested Conductor Gauge:** Determines and suggests the appropriate conductor gauge (AWG or kcmil) based on the calculated adjusted current and loaded ampacity data.
-* **Robust Error Handling:** Provides informative error messages for issues like file loading failures, invalid inputs, or data not found.
-* **User-Friendly Interaction:** Guides the user through input prompts and pauses the console window at the end of execution (or upon error) to allow time for result review.
-
----
-
-## How to Compile and Run
-
-### Prerequisites
-
-Ensure you have a C compiler installed on your system. **GCC** is recommended for Linux/macOS/WSL, and **MinGW** for Windows. You can check your GCC version by running:
-
-```bash
-gcc --version
-```
+## Technology used
+* Programming Language: 100% C
+* Design Standards: NOM-001-SEDE-2012
+-
 
 ### Required Files
-Make sure the following CSV files are located in the same directory as your main.c source code file (and, consequently, your compiled executable):
+Make sure the following CSV files are located in /data directory:
 
 * ampacity_data.csv
 
@@ -36,15 +31,24 @@ Make sure the following CSV files are located in the same directory as your main
 
 * num_cond_adj_data.csv
 
-*conduit_fill_data.csv
+* conduit_fill_data.csv
 
-### Compilation Steps
+Verify compiler:
+```bash
+gcc --version
+```
+
+## How to compile and run
+* A C compiler (GCC recommended via MinGW/MSYS2 on Windows, or native on Linux/macOS).
+* **On Windows:** The `windows.h` header is required for console manipulation (`gotoxy`, `cls`). MinGW typically includes this.
+* **On Linux/macOS:** A terminal that supports ANSI escape codes (most modern terminals do).
+
 Use gcc (or your chosen C compiler) to compile the code. The -lm flag is essential for linking the math library (needed for functions like sqrt()):
 
 ```bash
 gcc wiring.c -o wiring.exe -lm
 ```
-* wiring.c: Your main C source code file.
+* wiring.c: The main C source code file.
 
 * -o wiring.exe: Specifies the output executable file name. You can change wiring.exe to anything you prefer (e.g., electrical_selector.exe).
 
@@ -83,64 +87,46 @@ The program will guide you step-by-step to enter the following parameters:
 
 ## Code Breakdown
 ### Key Functions
-1. load_ampacity_table_data(const char *arg_file_name_ptr)
+1. load_..._data() Functions: Load data from the four CSV files with error checking and whitespace trimming.
 
-* Loads conductor ampacity data from a CSV file.
+2. calculate_load_current_amps(...): Calculates initial load current (Ib).
 
-2. load_temperature_correction(const char *arg_file_name_ptr)
+3. calculate_adjusted_current_amps(...): Calculates adjusted design current (Iz).
 
-* Loads temperature correction factors from a CSV file.
+4. get_temp_correction_factor(...): Retrieves temperature correction factor.
 
-3. load_nconductor_factor(const char *arg_file_name_ptr)
+5. get_ncond_adj_factor(...): Retrieves conductor grouping adjustment factor, handling ranges.
 
-* Loads conductor count adjustment factors from a CSV file.
+6. get_suggested_gauge_awg_kcmil(...): Selects the smallest gauge meeting Iz, insulation type, and temp rating.
 
-4. load_conduit_fill_data(const char *arg_file_name_ptr)
+7. find_conductor_by_gauge(...): Efficiently returns a pointer (Conductor*) to all properties for a given gauge.
 
-* Loads conduit fill data (types and areas) from a CSV file.
+8. calculate_voltage_drop_volts(...): Calculates voltage drop using conductor R/X values.
 
-5. calculate_load_current_amps(float arg_power_watts, float arg_voltage_volts, float arg_power_factor, int arg_phase_count)
+9. get_conduit_area(...): Retrieves internal area for a specific conduit type/size.
 
-* Calculates the load current (Ib) based on power, voltage, power factor, and number of phases.
+10. display_calculation_results_ascii(...): Draws the TUI box and displays formatted results using gotoxy.
 
-6. calculate_adjusted_current_amps(float arg_load_current_amps, float arg_temp_correction_factor, float arg_num_cond_adjustment_factor)
+11. gotoxy(...), draw_ascii_box(...): Helper functions for TUI rendering.
 
-* Calculates the adjusted design current (Iz) using the load current and correction factors.
+12. portable_strcasecmp(...), trim_trailing_whitespace(...): Utility functions for string handling.
 
-7. get_temp_correction_factor(int arg_ambient_temp)
+13. main(): Orchestrates loading, input, calculations, and calls the TUI display function.
 
-* Retrieves the temperature correction factor for a given ambient temperature.
+### Error Codes (#Defines in #define)
+The program uses return codes to indicate success or specific types of erros:
 
-8. get_ncond_adj_factor(int arg_conductor_count)
+* SUCCESS (0): Operation successful.
 
-* Retrieves the adjustment factor for the given number of conductors.
+* ERROR_FILE_OPEN (-1): Failed to open CSV file.
 
-9. get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps)
+* ERROR_INVALID_INPUT (-2): User input invalid or calculated value out of bounds.
 
-* Determines and returns the suggested conductor gauge (AWG or kcmil) that meets the adjusted current.
+* ERROR_DATA_NOT_FOUND (-3): Required data not found in CSVs.
 
-10. get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diameter_nominal_inches)
+* ERROR_PHASE_COUNT (-4): Invalid phase count.
 
-* (Future implementation) Will retrieve the internal area of a specific conduit.
-
-11. Input/Output Handling:
-
-* The main loop in main() manages user input requests and result display. It includes basic input validation and a mechanism to pause execution at the end (getchar()).
-
-### Error Codes (Defined in #define)
-The program uses return codes to indicate success or specific types of errors:
-
-* SUCCESS (0)
-
-* ERROR_FILE_OPEN (-1)
-
-* ERROR_INVALID_INPUT (-2)
-
-* ERROR_DATA_NOT_FOUND (-3)
-
-* ERROR_PHASE_COUNT (-4)
-
-* ERROR_DIVIDE_BYZERO (-5)
+* ERROR_DIVIDE_BYZERO (-5): Division by zero.
 
 ## Example Output
 ### Program Start and Data Loading
@@ -152,49 +138,68 @@ Electrical Conductor Selection Program (NOM-001-SEDE-2012)
 Action: Loaded X ampacity data entries from ampacity_data.csv.
 Action: Loaded X temperature correction factors from temp_correction_data.csv.
 Action: Loaded X number of conductors adjustment factors from num_cond_adj_data.csv.
-Action: Loaded X conduit fill data entries from conduit_fill_data.csv. 
+Action: Loaded X conduit fill data entries from conduit_fill_data.csv.
 --- Data Loading Complete ---
 
 --- Enter Circuit Parameters ---
-Enter power (Watts, e.g., 10000): 
+Enter power (Watts, e.g., 10000):
 ```
 ### Successful Calculation Scenario
 ```bash
 ... (user inputs) ...
 ------------------------------
-
---- Performing Calculations ---
-Calculated Load Current (Ib): 45.45 Amps
-Action: Getting suggested gauge for 53.47 Amps with insulation type THHW.
-Adjusted Design Current (Iz): 53.47 Amps
-Suggested Conductor Gauge: 8 AWG
-
-Press Enter to exit...
 ```
-### Error Scenario (File Not Found)
+
+## Example of TUI Output
+After entering all the parameters, the console will clear and display something similar to this:
 ```bash
---- Loading NOM Data ---
-Error: Failed to open ampacity_data.csv
-Error loading ampacity data. Exiting program...
++-----------------------------------------------------------------------------------------+
+| --- ELECTRICAL CALCULATION RESULTS ---                                                  |
+|                                                                                         |
+| LOAD CURRENT (Ib):             35.11 Amps                                               |
+| ADJUSTED DESIGN CURRENT (Iz):  46.70 Amps                                               |
+|                                                                                         |
+| SUGGESTED GAUGE:               8 AWG                                                    |
+|   - Area: 8.37 mm^2 / Res: 2.1600 Ohm/km / React: 0.1200 Ohm/km                         |
+|                                                                                         |
+| VOLTAGE DROP (VD):             2.55 Volts (Max Allowed: 6.60V)                          |
+|   >> RESULT: Voltage Drop is acceptable.                                                |
+|                                                                                         |
+| CONDUIT FILL CHECK:                                                                     |
+|   - Total Cond. Area: 33.48 mm^2 / Conduit Area: 412.90 mm^2                            |
+|   - Fill Percentage: 8.11 % (Limit: 40.00 %)                                            |
+|   >> RESULT: Conduit fill is within acceptable limits.                                  |
+|                                                                                         |
++-----------------------------------------------------------------------------------------+
+
+
+--- Calculations Complete ---
+Thank you for using the Electrical Conductor Selection Program. Goodbye!
+
 Press Enter to exit...
 ```
-### Known Limitations
-* The get_conductor_resistance_km, get_conductor_reactance_km, and get_conductor_mm2 functions are declared but not yet implemented to retrieve actual data.
+(Note: Specific values depend on user input and CSV data accuracy)
 
-* User input validation is basic and could be enhanced to handle more complex cases.
+### Known Limitations and Future Enhancements
+#### Limitations
 
-* Currently, insulation type and conduit type/diameter are requested but do not directly influence conductor gauge selection in the current logic (though conduit data is loaded for future implementation).
+* **Data Accuracy:** Results depend entirely on the correctness of data in CSV files per NOM-001-SEDE-2012.
 
-### Future Enhancements
-* Integrate voltage drop calculations using conductor resistance and reactance.
+* **Input Validation:** While basic checks exist, more advanced validation (e.g., ensuring entered insulation/conduit types exist in the data) could be added.
 
-* Implement logic for conductor gauge selection based on insulation type and conduit fill capacity.
+* **strtok:** CSV parsing uses strtok. For complex or potentially malformed CSVs, more robust methods might be needed.
 
-* Improve the robustness of user input validation.
+* **Cross-Platform TUI:** Relies on #ifdef _WIN32 for gotoxy and cls. ANSI codes are used otherwise, assuming terminal compatibility.
 
-* Consider implementing a Graphical User Interface (GUI) for a better user experience.
+#### Future Enhancements
 
-* Allow dynamic selection of insulation type for ampacity (currently fixed at 75°C).
+* **Enhanced Input:** Allow selection from lists of available options (insulation, conduit) derived from loaded data.
+
+* **More Complex Scenarios:** Handle parallel conductors, different load types, or motor starting currents.
+
+* **Unit Options:** Offer input/output in different units (feet, °F).
+
+* **Configuration File:** Use a config file for settings (filenames, limits).
 
 ## License
 This project is licensed under the MIT License.
