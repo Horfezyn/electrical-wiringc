@@ -137,16 +137,16 @@ int main() {
     printf("----------------CS50 PROJECT by @Horfezyn----------------\n\n");
     printf("--- Loading NOM Data ---\n");
 
-    return_code = load_ampacity_table_data("ampacity_data.csv");
+    return_code = load_ampacity_table_data("data/ampacity_data.csv");
     if (return_code != SUCCESS){ printf("Error loading ampacity data. Exiting program...\n"); return return_code; }
 
-    return_code = load_temperature_correction("temp_correction_data.csv");
+    return_code = load_temperature_correction("data/temp_correction_data.csv");
     if (return_code != SUCCESS){ printf("Error loading temperature correction data. Exiting program...\n"); return return_code; }
 
-    return_code = load_nconductor_factor("num_cond_adj_data.csv");
+    return_code = load_nconductor_factor("data/num_cond_adj_data.csv");
     if (return_code != SUCCESS){ printf("Error loading number of conductor adjustment data. Exiting program...\n"); return return_code; }
 
-    return_code = load_conduit_fill_data("conduit_fill_data.csv");
+    return_code = load_conduit_fill_data("data/conduit_fill_data.csv");
     if (return_code != SUCCESS){ printf("Error loading conduit fill data. Exiting program...\n"); return return_code; }
 
     printf("--- Data Loading Complete ---\n\n");
