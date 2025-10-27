@@ -117,7 +117,7 @@ int main() {
     float local_conduit_diameter;
     int local_insulation_temperature_rating;
 
-    // REFAC.: Results variables initialized
+    // Results variables initialized
     float local_load_current_amps = (float)ERROR_DATA_NOT_FOUND;
     float local_adjusted_current_amps = (float)ERROR_DATA_NOT_FOUND;
     int local_suggested_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND;
@@ -199,7 +199,7 @@ int main() {
             while (getchar() != '\n');
             local_ambient_temperature = -1000; // Use an unlikely value to re-prompt
         }
-    } while (local_ambient_temperature < -273); // Allow reasonable temps
+    } while (local_ambient_temperature < -45); // Allow reasonable temps
     do{
         printf("Enter number of current-carrying conductors in conduit (e.g., 3): ");
         if (scanf("%d", &local_conductor_count) != 1) {
@@ -318,10 +318,6 @@ int main() {
     printf("--- Calculations Complete ---\n");
     printf("Thank you for using the Electrical Conductor Selection Program. Goodbye!\n");
     printf("\nPress Enter to exit...");
-
-    // Clear potential leftover input buffer before final pause
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF); // Consume remaining characters until newline or EOF
 
     getchar(); // Wait for Enter key
     return SUCCESS;
