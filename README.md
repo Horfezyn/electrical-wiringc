@@ -112,8 +112,7 @@ Action: Loaded X conduit fill data entries from conduit_fill_data.csv.
 --- Data Loading Complete ---
 
 ```
-### Successful Calculation Scenario
-## Example of TUI Output
+## Succesul Calculation Scenario
 After entering all the parameters, the console will clear and display something similar to this:
 ```bash
 +-----------------------------------------------------------------------------------------+
