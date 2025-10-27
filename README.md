@@ -15,12 +15,10 @@ The project seeks to simplify the electrical design process, ensuring that the s
 * **Conduit Fill Check:** Calculates the percentage fill of the specified conduit and checks against the 40% limit.
 * **Text-based User Interface (TUI):** Clears the screen after input and presents calculation results within an ASCII-drawn box for enhanced readability using platform-specific console functions (`gotoxy` via `windows.h` or ANSI escape codes).
 * **Portable Code:** Uses standard C libraries and includes portable functions for case-insensitive string comparison and whitespace trimming.
--
 
 ## Technology used
 * Programming Language: 100% C
 * Design Standards: NOM-001-SEDE-2012
--
 
 ### Required Files
 Make sure the following CSV files are located in /data directory:
@@ -58,75 +56,47 @@ gcc wiring.c -o wiring.exe -lm
 After successful compilation, run the executable from your terminal:
 
 ```bash
-./conductor_selector.exe
+./wiring.exe
 ```
 The program will prompt you for input and display the results. It will pause at the end, waiting for you to press Enter before closing the console window.
 
 Sample Input Prompts
 The program will guide you step-by-step to enter the following parameters:
 
-1. Power in watts (e.g., 10000)
-
-2. System Voltage in volts (e.g., 220)
-
-3. Power Factor (e.g., 0.85)
-
-4. Number of Phases (1 or 3)
-
-5. Circuit Length in meters (e.g., 50)
-
-6. Ambient Temperature in °C (e.g., 30)
-
-7. Number of Current-Carrying Conductors in conduit (e.g., 3)
-
-8. Insulation Type (e.g., THHN, THW)
-
-9. Conduit Type (e.g., EMT, PVC)
-
-10. Conduit Nominal Diameter (e.g., 0.5 for 1/2 inch, 0.75 for 3/4 inch)
+```bash
+--- Enter Circuit Parameters ---
+Enter power (Watts, e.g., 10000): 12000
+Enter system voltage (Volts, e.g., 220): 440
+Enter power factor (e.g., 0.85): .87
+Enter number of phases (1 or 3): 3
+Enter circuit length (meters, e.g., 50): 35
+Enter ambient temperature (celsius, e.g., 30): 35
+Enter number of current-carrying conductors in conduit (e.g., 3): 3
+Enter insulation type (e.g., THHN, THW): thhn
+Enter insulation temperature rating (75 or 90): 75
+Enter conduit type (e.g., EMT, PVC): emt
+Enter conduit nominal diameter (e.g., 0.5 for 1/2, 0.75 for 3/4): .5
+```
 
 ## Code Breakdown
 ### Key Functions
-1. load_..._data() Functions: Load data from the four CSV files with error checking and whitespace trimming.
+We can catrgorize functions into 3 important types depending on the function permormed:
 
-2. calculate_load_current_amps(...): Calculates initial load current (Ib).
-
-3. calculate_adjusted_current_amps(...): Calculates adjusted design current (Iz).
-
-4. get_temp_correction_factor(...): Retrieves temperature correction factor.
-
-5. get_ncond_adj_factor(...): Retrieves conductor grouping adjustment factor, handling ranges.
-
-6. get_suggested_gauge_awg_kcmil(...): Selects the smallest gauge meeting Iz, insulation type, and temp rating.
-
-7. find_conductor_by_gauge(...): Efficiently returns a pointer (Conductor*) to all properties for a given gauge.
-
-8. calculate_voltage_drop_volts(...): Calculates voltage drop using conductor R/X values.
-
-9. get_conduit_area(...): Retrieves internal area for a specific conduit type/size.
-
-10. display_calculation_results_ascii(...): Draws the TUI box and displays formatted results using gotoxy.
-
-11. gotoxy(...), draw_ascii_box(...): Helper functions for TUI rendering.
-
-12. portable_strcasecmp(...), trim_trailing_whitespace(...): Utility functions for string handling.
-
-13. main(): Orchestrates loading, input, calculations, and calls the TUI display function.
+* Functions type **load**, load data from the CSV files with error checking and whitespace trimming.
+* Functions type **get**, retrieves values from the data structures.
+* Functions type **calculate**, develop math calculations, such as multiplications and divisions.
 
 ### Error Codes (#Defines in #define)
 The program uses return codes to indicate success or specific types of erros:
 
-* SUCCESS (0): Operation successful.
-
-* ERROR_FILE_OPEN (-1): Failed to open CSV file.
-
-* ERROR_INVALID_INPUT (-2): User input invalid or calculated value out of bounds.
-
-* ERROR_DATA_NOT_FOUND (-3): Required data not found in CSVs.
-
-* ERROR_PHASE_COUNT (-4): Invalid phase count.
-
-* ERROR_DIVIDE_BYZERO (-5): Division by zero.
+```bash
+SUCCESS                 (0)     // Operation successful.
+ERROR_FILE_OPEN         (-1)    // Failed to open CSV file.
+ERROR_INVALID_INPUT     (-2)    // User input invalid or calculated value out of bounds
+ERROR_DATA_NOT_FOUND    (-3)    // Required data not found in CSVs
+ERROR_PHASE_COUNT       (-4)    // Invalid phase count.
+ERROR_DIVIDE_BYZERO     (-5)    // Division by zero.
+```
 
 ## Example Output
 ### Program Start and Data Loading
@@ -141,15 +111,8 @@ Action: Loaded X number of conductors adjustment factors from num_cond_adj_data.
 Action: Loaded X conduit fill data entries from conduit_fill_data.csv.
 --- Data Loading Complete ---
 
---- Enter Circuit Parameters ---
-Enter power (Watts, e.g., 10000):
 ```
 ### Successful Calculation Scenario
-```bash
-... (user inputs) ...
-------------------------------
-```
-
 ## Example of TUI Output
 After entering all the parameters, the console will clear and display something similar to this:
 ```bash
