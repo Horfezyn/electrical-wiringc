@@ -1,16 +1,16 @@
-#include <stdio.h> // For input/output
-#include <stdlib.h> // For general utilities (malloc, free)
-#include <math.h> // For mathematical functions (sqrtf, fabsf)
-#include <string.h> // For string manipulation (strcpy, strtok, strcmp, strlen)
-#include <ctype.h>  // For tolower
-#include <stddef.h> // For size_t
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <ctype.h>
+#include <stddef.h>
 
 // Include for Windows-specific console functions (gotoxy)
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// --- Error Codes --- Corrected definitions
+// --- Error Codes ---
 #define SUCCESS                 (0)
 #define ERROR_FILE_OPEN         (-1)
 #define ERROR_INVALID_INPUT     (-2)
@@ -59,7 +59,7 @@ int g_temp_correction_count = 0;
 NumCondFactor g_ncond_adj_g_list[20];
 int g_ncond_adj_count = 0;
 
-Conduit g_conduit_data_g_list[30]; // Keep increased size if needed for conduit data
+Conduit g_conduit_data_g_list[30];
 int g_conduit_count = 0;
 
 // --- Function Prototypes ---
@@ -70,13 +70,13 @@ void display_calculation_results_ascii(
     float local_voltage_volts,
     float local_load_current_amps,
     float local_adjusted_current_amps,
-    int local_suggested_gauge_awg_kcmil, // Final gauge
-    Conductor *suggested_conductor,     // Final conductor pointer
-    float final_voltage_drop,           // Final VD value
+    int local_suggested_gauge_awg_kcmil,
+    Conductor *suggested_conductor,
+    float final_voltage_drop,
     float local_conduit_area,
     float local_total_conductor_area
 );
-int portable_strcasecmp(const char *s1, const char *s2); // Portable case-insensitive compare
+int portable_strcasecmp(const char *s1, const char *s2);
 
 // For data loading
 int load_ampacity_table_data(const char *arg_file_name_ptr);
@@ -97,7 +97,7 @@ float get_conduit_area(const char *arg_conduit_type_ptr, float arg_conduit_diame
 
 // Selection and validation
 int get_suggested_gauge_awg_kcmil(float arg_adjusted_current_amps, const char *arg_insulation_type_ptr, int arg_temp_rating);
-Conductor* select_final_gauge_considering_vd( // NEW Function for VD check
+Conductor* select_final_gauge_considering_vd(
     int initial_gauge_awg_kcmil,
     float load_current_amps,
     float circuit_length_meters,
@@ -106,7 +106,7 @@ Conductor* select_final_gauge_considering_vd( // NEW Function for VD check
     int phase_count,
     const char *insulation_type
 );
-int find_conductor_index(int gauge_awg_kcmil, const char *insulation_type); // Helper for VD check
+int find_conductor_index(int gauge_awg_kcmil, const char *insulation_type); 
 
 // Helper to remove trailing whitespace/newlines
 void trim_trailing_whitespace(char *str);
@@ -130,11 +130,11 @@ int main() {
     // Results variables initialized
     float local_load_current_amps = (float)ERROR_DATA_NOT_FOUND;
     float local_adjusted_current_amps = (float)ERROR_DATA_NOT_FOUND;
-    int initial_suggested_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND; // Gauge based on ampacity
-    int final_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND; // Final gauge after VD check
-    Conductor *final_conductor = NULL; // Pointer to the final conductor struct
+    int initial_suggested_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND;
+    int final_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND;
+    Conductor *final_conductor = NULL;
 
-    float final_voltage_drop = (float)ERROR_DATA_NOT_FOUND; // Final VD value
+    float final_voltage_drop = (float)ERROR_DATA_NOT_FOUND;
     float local_conduit_area = (float)ERROR_DATA_NOT_FOUND;
     float local_total_conductor_area = (float)ERROR_DATA_NOT_FOUND;
 
@@ -262,7 +262,7 @@ int main() {
 
     // 5. Select FINAL gauge considering Voltage Drop
     if (initial_suggested_gauge_awg_kcmil != ERROR_DATA_NOT_FOUND && initial_suggested_gauge_awg_kcmil > 0) {
-        printf("Initial suggestion based on ampacity: %d AWG/kcmil\n", initial_suggested_gauge_awg_kcmil); // Informative print
+        printf("Initial suggestion based on ampacity: %d AWG/kcmil\n", initial_suggested_gauge_awg_kcmil);
 
         final_conductor = select_final_gauge_considering_vd(
             initial_suggested_gauge_awg_kcmil,
@@ -275,8 +275,7 @@ int main() {
         );
 
         if (final_conductor != NULL) {
-            final_gauge_awg_kcmil = final_conductor->sc_gauge_awg_kcmil; // Update to the final selected gauge
-            // Recalculate VD for the final conductor to display it accurately
+            final_gauge_awg_kcmil = final_conductor->sc_gauge_awg_kcmil;
             final_voltage_drop = calculate_voltage_drop_volts(
                 local_load_current_amps,
                 local_circuit_length_meters,
@@ -286,14 +285,13 @@ int main() {
                 local_phase_count
              );
         } else {
-            // Handle case where VD check failed severely (e.g., even largest gauge failed)
-            final_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND; // Mark final gauge as error
-            final_voltage_drop = (float)ERROR_DATA_NOT_FOUND; // Indicate VD failure
+            final_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND; 
+            final_voltage_drop = (float)ERROR_DATA_NOT_FOUND;
         }
 
     } else {
         REPORT_ERROR("No initial conductor gauge suggested based on ampacity.");
-        final_conductor = NULL; // Ensure pointer is NULL
+        final_conductor = NULL;
         final_gauge_awg_kcmil = ERROR_DATA_NOT_FOUND;
         final_voltage_drop = (float)ERROR_DATA_NOT_FOUND;
     }
@@ -311,6 +309,9 @@ int main() {
         local_total_conductor_area = (float)ERROR_DATA_NOT_FOUND;
     }
 
+    printf("\\n Press enter to final calculation");
+    getchar(); // Wait for Enter key
+
     // --- Display TUI results ---
     #ifdef _WIN32
         system("cls");
@@ -323,9 +324,9 @@ int main() {
         local_voltage_volts,
         local_load_current_amps,
         local_adjusted_current_amps,
-        final_gauge_awg_kcmil, // Pass the final gauge value
-        final_conductor,       // Pass the final conductor pointer
-        final_voltage_drop,    // Pass the final VD value
+        final_gauge_awg_kcmil,
+        final_conductor,
+        final_voltage_drop,
         local_conduit_area,
         local_total_conductor_area
     );
@@ -369,9 +370,9 @@ void display_calculation_results_ascii(
     float local_voltage_volts,
     float local_load_current_amps,
     float local_adjusted_current_amps,
-    int final_gauge_awg_kcmil, // Renamed for clarity
-    Conductor *final_conductor,  // Renamed for clarity
-    float final_voltage_drop,    // Renamed for clarity
+    int final_gauge_awg_kcmil,
+    Conductor *final_conductor,
+    float final_voltage_drop,
     float local_conduit_area,
     float local_total_conductor_area
 ) {
@@ -444,7 +445,7 @@ void display_calculation_results_ascii(
         else printf("  >> STATUS: Cannot calculate fill (Conductor data missing).");
     }
 
-    gotoxy(1, box_y2 + 2); // Position cursor below the box
+    gotoxy(1, box_y2 + 2);
 }
 
 
@@ -548,7 +549,7 @@ int load_conduit_fill_data(const char *arg_file_name_ptr){
 
     g_conduit_count = 0;
     int line_num = 1;
-    while(fgets(line, sizeof(line), file_ptr) && g_conduit_count < 30){ // Using 30 based on global array size
+    while(fgets(line, sizeof(line), file_ptr) && g_conduit_count < 30){ 
          line_num++;
          if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0' || line[0] == '#') continue;
         char *token;
@@ -704,7 +705,6 @@ int find_conductor_index(int gauge_awg_kcmil, const char *insulation_type) {
     return -1; // Not found
 }
 
-
 // Selects the final gauge ensuring voltage drop is within limits
 Conductor* select_final_gauge_considering_vd(
     int initial_gauge_awg_kcmil,
@@ -729,7 +729,6 @@ Conductor* select_final_gauge_considering_vd(
     while (current_index < g_conductor_count) {
         current_conductor = &g_conductor_data_g_list[current_index];
 
-        // Ensure we are still looking at the correct insulation type
         if (portable_strcasecmp(current_conductor->sc_insulation_type, insulation_type) != 0) {
              current_index++;
              continue;
@@ -744,7 +743,7 @@ Conductor* select_final_gauge_considering_vd(
         if (calculated_vd >= 0 && calculated_vd <= max_allowed_vd) {
             printf("Info: Gauge %d AWG/kcmil selected. VD (%.2fV) is within limit (%.2fV).\n",
                    current_conductor->sc_gauge_awg_kcmil, calculated_vd, max_allowed_vd);
-            return current_conductor; // Found suitable conductor
+            return current_conductor; // Found suitable conductor!
         }
 
         printf("Info: Gauge %d AWG/kcmil results in high VD (%.2fV > %.2fV). Checking next size...\n",
@@ -761,11 +760,10 @@ Conductor* select_final_gauge_considering_vd(
         if (next_valid_index != -1) {
             current_index = next_valid_index;
         } else {
-            break; // No larger gauge of the same insulation type found
+            break;
         }
     }
 
-    // If loop finished without finding a suitable conductor
     REPORT_ERROR("Voltage drop exceeds 3% limit even with the largest available conductor of the specified type.");
-    return current_conductor; // Return the last (largest) checked conductor, even if VD is too high
+    return current_conductor;
 }
